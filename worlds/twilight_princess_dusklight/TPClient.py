@@ -290,8 +290,9 @@ class TPContext(CommonContext):
                     ), f"[Twilight Princess Client] Recived an item the is not a Network Item {item=}"
                     self.items_received.append(item)
                     self.last_received_index += 1
-                    if item.player != self.slot:  # Don't give own items
-                        self.item_queue.append((item, self.last_received_index))
+                    # Dusklight is fully-remote (no in-game REL): queue ALL received
+                    # items, including our own, for native delivery via execItemGet.
+                    self.item_queue.append((item, self.last_received_index))
                     self.validation_pause.set()
 
     def on_deathlink(self, data: dict[str, Any]) -> None:
@@ -533,95 +534,15 @@ async def give_items(ctx: TPContext) -> None:
 
             item_data = ITEM_TABLE[item_name]
 
-            # Basic items we don't care if are given multiple times
-            if item_data.type in [
-                "Rupee",
-                "Ammo",
-                "Trap",
-                "Small key",  # TODO: Insure Keys
-                "Big Key",
-                "Book",
-            ]:
-                item_give_queue.append(item_name)
-
-            # Items that we need to check the count of before giving to link
-            elif item_data.type in [
-                "Item",
-                "Bottle",
-                "Bug",
-                "Poe",
-            ]:
-                # actual_item_count = check_item_count(item_name, SAVE_FILE_ADDR)
-
-                # expected_item_count = 0
-                # for item in ctx.items_received:
-                #     if item.item == item_data.code:
-                #         expected_item_count += 1
-
-                # # Note: items given directly through memory will cause an item wait where an item is not given
-                # # # If this occurs they did it to themselfs
-
-                # # Usually this will be a differance of 1
-                # if expected_item_count > actual_item_count:
-                #     item_give_queue.append(item_name)
-                # else:
-                #     if DEBUGGING:
-                #         logger.info(
-                #             f"Debug: Tried to give {item_name=} but player already has {expected_item_count=}, {actual_item_count=}"
-                #         )
-                continue
-
-            elif item_data.type in [
-                "Compass",
-                "Map",
-            ]:
-                # if (
-                #     check_dungeon_item_count(
-                #         item_name, SAVE_FILE_ADDR, ctx.current_node
-                #     )
-                #     == 0
-                # ):
-                #     item_give_queue.append(item_name)
-                # else:
-                #     if DEBUGGING:
-                #         logger.info(
-                #             f"Debug: Tried to give {item_name=} but player already has one"
-                #         )
-                continue
-
-            elif item_data.type in [
-                "Heart",
-            ]:
-                # actual_heart_pieace_count = read_short(SAVE_FILE_ADDR)
-
-                # heart_piece_count = 0
-                # heart_container_count = 0
-                # for item in ctx.items_received:
-                #     if item.item == TPItem.get_apid(ITEM_TABLE["Piece of Heart"].code):
-                #         heart_piece_count += 1
-                #     if item.item == TPItem.get_apid(ITEM_TABLE["Heart Container"].code):
-                #         heart_container_count += 1
-
-                # if (
-                #     actual_heart_pieace_count
-                #     < (heart_container_count * 5) + heart_piece_count + 15
-                # ):
-                #     item_give_queue.append(item_name)
-                # else:
-                #     if DEBUGGING:
-                #         logger.info(
-                #             f"Debug: Tried to give {item_name=} but player already has {actual_heart_pieace_count=}, {heart_container_count=},{heart_piece_count=}"
-                #         )
-                continue
-
-            elif item_data.type == "Event":
+            # Dusklight is fully-remote: grant every received item via the native
+            # execItemGet bridge. The expected-index guard (written below) prevents
+            # re-giving across reconnects, so per-type count checks aren't needed.
+            if item_data.type == "Event":
                 assert (
                     False
-                ), f"[Twilight Princess Client] got an event item. {item_name=} I didn't think that could happen, as it has no id"
+                ), f"[Twilight Princess Client] got an event item {item_name=}; it has no id"
             else:
-                assert (
-                    False
-                ), f"[Twilight Princess Client] {item_name=} has an invalid type {item_data.type}"
+                item_give_queue.append(item_name)
 
             # Only try to give a full queue or whatever is there
             if len(item_give_queue) == 8 or (
