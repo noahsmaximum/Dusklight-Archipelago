@@ -914,17 +914,23 @@ async def check_locations(ctx: TPContext) -> None:
             assert isinstance(server_copy_value, str), f"{server_copy_key=}"
 
             result = read_string(SAVE_FILE_ADDR + 0x58, 8)
-
             assert isinstance(result, str), f"{result=}"
-            if result not in STAGE_TO_NAME:
-                # Unmapped stage name (e.g. a dungeon sub-stage like "D_MN04A").
-                # Don't crash the watcher -- just skip the current-stage tracker
-                # update for this tick.
+
+            # Dungeons (and some areas) are split into multiple stages that append a
+            # letter to the base name, e.g. Goron Mines D_MN04 -> D_MN04A / D_MN04B.
+            # Sub-stages share their base area, so fall back to the base name. This
+            # covers every multi-stage dungeon without enumerating each sub-stage.
+            stage_key = result
+            if stage_key not in STAGE_TO_NAME and len(stage_key) > 1 and stage_key[-1].isalpha():
+                stage_key = stage_key[:-1]
+            if stage_key not in STAGE_TO_NAME:
+                # Still unknown -- don't crash the watcher; just skip the (cosmetic)
+                # current-stage tracker update for this tick.
                 if DEBUGGING:
                     logger.info(f"Debug: unmapped stage {result!r}; skipping stage update")
                 continue
 
-            current_stage_str = STAGE_TO_NAME[result]
+            current_stage_str = STAGE_TO_NAME[stage_key]
             if current_stage_str != server_copy_value:
                 if DEBUGGING:
                     logger.info(
