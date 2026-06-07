@@ -5,7 +5,7 @@ from typing import Any
 import pytest  # type: ignore
 from BaseClasses import get_seed
 from test.bases import WorldTestBase
-from worlds.twilight_princess_apworld.options import *
+from worlds.twilight_princess_dusklight.options import *
 
 DEFAULT_TEST_SEED = get_seed()
 
@@ -17,13 +17,13 @@ class TwilightPrincessWorldTestBase(WorldTestBase):
     # Later there may be more tests to test specific things but most of the testing occurs are run time
     #   This way a fuzzer can be run to explore the seed space for all possible bugs in the system
 
-    game = "Twilight Princess"
+    game = "Twilight Princess (Dusklight)"
     player = 1
     options: dict[str, Any]
 
     logger = logging.Logger("Test_logger")
     logger.addHandler(
-        logging.FileHandler("worlds\\twilight_princess_apworld\\tests\\logs.log")
+        logging.FileHandler("worlds\\twilight_princess_dusklight\\tests\\logs.log")
     )
 
     run_long_tests = True

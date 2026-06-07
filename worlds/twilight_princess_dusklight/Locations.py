@@ -127,7 +127,7 @@ class TPLocationData(NamedTuple):
 
 
 class TPLocation(Location):
-    game: str = "Twilight Princess"
+    game: str = "Twilight Princess (Dusklight)"
 
     def __init__(self, player: int, name: str, parent: Region, data: TPLocationData):
 

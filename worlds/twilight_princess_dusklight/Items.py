@@ -35,7 +35,7 @@ class TPItemData(NamedTuple):
     code: Optional[int]
     quantity: int
     item_id: Optional[int]
-    game: str = "Twilight Princess"
+    game: str = "Twilight Princess (Dusklight)"
 
 
 class TPItem(Item):
@@ -48,7 +48,7 @@ class TPItem(Item):
     :param classification: Optional classification to override the default.
     """
 
-    game: str = "Twilight Princess"
+    game: str = "Twilight Princess (Dusklight)"
     type: Optional[str]
 
     def __init__(

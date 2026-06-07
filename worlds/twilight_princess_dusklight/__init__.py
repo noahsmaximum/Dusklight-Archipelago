@@ -58,7 +58,7 @@ def run_client() -> None:
     """
     Launch the Twilight Princess client.
     """
-    print("Running Twilight Princess Client")
+    print("Running Twilight Princess (Dusklight) Client")
     from .TPClient import main
 
     launch_subprocess(main, name="TwilightPrincessClient")
@@ -66,7 +66,7 @@ def run_client() -> None:
 
 components.append(
     Component(
-        "Twilight Princess Client",
+        "Twilight Princess (Dusklight) Client",
         func=run_client,
         component_type=Type.CLIENT,
         file_identifier=SuffixIdentifier(".aptp"),
@@ -107,7 +107,7 @@ class TPWorld(World):
     options_dataclass = TPOptions
     options: TPOptions
 
-    game: ClassVar[str] = "Twilight Princess"
+    game: ClassVar[str] = "Twilight Princess (Dusklight)"
     topology_present: bool = True
 
     item_name_to_id: ClassVar[dict[str, int]] = {

@@ -183,7 +183,7 @@ class TPContext(CommonContext):
     """
 
     command_processor = TPCommandProcessor
-    game: str = "Twilight Princess"
+    game: str = "Twilight Princess (Dusklight)"
     items_handling: int = 0b111
 
     def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
@@ -313,7 +313,7 @@ class TPContext(CommonContext):
         :return: The client's GUI.
         """
         ui = super().make_gui()
-        ui.base_title = "Archipelago Twilight Princess Client"
+        ui.base_title = "Archipelago Twilight Princess (Dusklight) Client"
         return ui
 
 

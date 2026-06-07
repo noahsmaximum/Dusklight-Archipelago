@@ -5,14 +5,14 @@ Archipelago multiworld randomizer support for **The Legend of Zelda: Twilight Pr
 
 > This repo is a fork of [Archipelago](https://github.com/ArchipelagoMW/Archipelago) used to **develop** the Twilight
 > Princess world. **Players don't need to clone this** — you use the released `.apworld` with a normal Archipelago
-> install (below). The world source lives in [`worlds/twilight_princess_apworld/`](worlds/twilight_princess_apworld).
+> install (below). The world source lives in [`worlds/twilight_princess_dusklight/`](worlds/twilight_princess_dusklight).
 
 ## What you need
 
 | Artifact | Where | Purpose |
 |---|---|---|
-| `twilight_princess_apworld.apworld` | [Releases](../../releases) | the world — install into Archipelago |
-| `Twilight Princess.yaml` | [Releases](../../releases) | your config template (edit, then give to the host) |
+| `twilight_princess_dusklight.apworld` | [Releases](../../releases) | the world — install into Archipelago |
+| `Twilight Princess (Dusklight).yaml` | [Releases](../../releases) | your config template (edit, then give to the host) |
 | **AP-enabled Dusklight build** | [game fork Releases](https://github.com/noahsmaximum/dusklight/releases) | the game the client talks to on `127.0.0.1:17354` |
 
 Unlike a typical randomizer (which patches an unmodified game), the Dusklight build **is** the in-game half of the
@@ -21,9 +21,9 @@ randomizer — so you must run the **AP-enabled build** from the game fork, not 
 ## Player setup
 
 1. **Install Archipelago** (official): https://github.com/ArchipelagoMW/Archipelago/releases
-2. **Install the world:** drop `twilight_princess_apworld.apworld` into Archipelago's `custom_worlds/` folder (or just
+2. **Install the world:** drop `twilight_princess_dusklight.apworld` into Archipelago's `custom_worlds/` folder (or just
    double-click the file).
-3. **Make your config:** open `Twilight Princess.yaml`, set `name:` to your **in-game Dusklight save file name**, choose
+3. **Make your config:** open `Twilight Princess (Dusklight).yaml`, set `name:` to your **in-game Dusklight save file name**, choose
    your options, and send it to whoever is generating the multiworld (or keep it for yourself).
 4. **Get the game:** download and run the AP-enabled Dusklight build, point it at your own game dump, and **load your save**.
 
@@ -39,7 +39,7 @@ website host can't generate it. With Archipelago installed:
 ## Playing
 
 1. Launch the AP-enabled Dusklight build and load your save.
-2. Open the Archipelago **Launcher** → start **Twilight Princess Client**.
+2. Open the Archipelago **Launcher** → start **Twilight Princess (Dusklight) Client**.
 3. Enter the server address and your slot name (must equal your save file name) and connect.
 
 The client speaks Archipelago's protocol to the server and the bridge protocol to Dusklight on `127.0.0.1:17354`.
@@ -61,7 +61,7 @@ reinstall everything. Then, with a YAML in `Players/`:
 ```sh
 python Generate.py                                   # -> output/AP_*.zip
 python MultiServer.py output/AP_<seed>.zip           # host
-python -m worlds.twilight_princess_apworld.TPClient --connect <host:port> --nogui   # client
+python -m worlds.twilight_princess_dusklight.TPClient --connect <host:port> --nogui   # client
 ```
 
 Rebuild the distributable `.apworld` with `build_apworld.py` (in the dev workspace).
