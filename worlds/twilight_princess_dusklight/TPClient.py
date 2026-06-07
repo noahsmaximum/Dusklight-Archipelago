@@ -916,7 +916,13 @@ async def check_locations(ctx: TPContext) -> None:
             result = read_string(SAVE_FILE_ADDR + 0x58, 8)
 
             assert isinstance(result, str), f"{result=}"
-            assert result in STAGE_TO_NAME, f"{result=}"
+            if result not in STAGE_TO_NAME:
+                # Unmapped stage name (e.g. a dungeon sub-stage like "D_MN04A").
+                # Don't crash the watcher -- just skip the current-stage tracker
+                # update for this tick.
+                if DEBUGGING:
+                    logger.info(f"Debug: unmapped stage {result!r}; skipping stage update")
+                continue
 
             current_stage_str = STAGE_TO_NAME[result]
             if current_stage_str != server_copy_value:

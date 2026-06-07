@@ -96,6 +96,8 @@ STAGE_TO_NAME = {
     "F_SP123": "King Bulbin Fights",
     "D_MN05": "Forest Temple",
     "D_MN04": "Goron Mines",
+    "D_MN04A": "Goron Mines",
+    "D_MN04B": "Goron Mines",
     "D_MN01": "Lakebed Temple",
     "D_MN10": "Arbiter's Grounds",
     "D_MN11": "Snowpeak Ruins",
