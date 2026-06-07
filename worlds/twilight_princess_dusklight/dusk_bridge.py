@@ -27,6 +27,7 @@ Integration patch for TPClient.py (5 small edits):
 """
 
 import socket
+import time
 from typing import Optional
 
 HOST = "127.0.0.1"
@@ -35,6 +36,21 @@ _TIMEOUT = 3.0
 
 _sock: Optional[socket.socket] = None
 _buf = b""
+
+# --- read coalescing -------------------------------------------------------
+# TPClient scans ~475 locations per tick, each a separate read. The native
+# module only services its socket once per frame, so per-read round-trips cap
+# throughput at ~1/frame -> a full scan took seconds and froze the client UI.
+# Instead snapshot the whole dSv_info_c window in ONE read and serve every
+# location/flag read from that snapshot (refreshed on a short TTL). The live
+# item-queue scratch [0x8F0, 0x910) is NEVER cached -- give_items must always
+# see the real queue / expected-index bytes.
+_CACHE_LEN = 0x0A00     # covers all read offsets (save data, node tables, mMemory)
+_CACHE_TTL = 0.02       # s; batches one scan yet stays fresh between watcher ticks
+_SCRATCH_LO = 0x8F0     # item queue (8 bytes) + expected index (2 bytes)
+_SCRATCH_HI = 0x910
+_cache: Optional[bytes] = None
+_cache_time = 0.0
 
 
 # ---- dolphin_memory_engine-compatible surface ------------------------------
@@ -46,6 +62,7 @@ def hook() -> None:
     try:
         s = socket.create_connection((HOST, PORT), timeout=_TIMEOUT)
         s.settimeout(_TIMEOUT)
+        s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         _sock = s
         _buf = b""
     except OSError:
@@ -57,7 +74,7 @@ def is_hooked() -> bool:
 
 
 def un_hook() -> None:
-    global _sock, _buf
+    global _sock, _buf, _cache
     if _sock is not None:
         try:
             _sock.close()
@@ -65,13 +82,14 @@ def un_hook() -> None:
             pass
     _sock = None
     _buf = b""
+    _cache = None
 
 
 def read_byte(offset: int) -> int:
     return read_bytes(offset, 1)[0]
 
 
-def read_bytes(offset: int, length: int) -> bytes:
+def _read_live(offset: int, length: int) -> bytes:
     resp = _txn(f"READ {offset} {length}")
     if not resp.startswith("OK"):
         raise RuntimeError(f"Dusk READ failed at {offset:#x}: {resp!r}")
@@ -82,7 +100,36 @@ def read_bytes(offset: int, length: int) -> bytes:
     return data
 
 
+def _ensure_snapshot() -> None:
+    """Refresh the cached dSv_info_c window snapshot if missing/expired."""
+    global _cache, _cache_time
+    now = time.monotonic()
+    if _cache is None or (now - _cache_time) > _CACHE_TTL:
+        try:
+            _cache = _read_live(0, _CACHE_LEN)
+            _cache_time = now
+        except Exception:
+            _cache = None
+
+
+def invalidate() -> None:
+    """Drop the cached snapshot (call after anything that mutates game memory)."""
+    global _cache
+    _cache = None
+
+
+def read_bytes(offset: int, length: int) -> bytes:
+    # Serve from the window snapshot, except reads that touch the live scratch
+    # region (item queue / expected index) or fall outside the snapshot.
+    if offset >= 0 and (offset >= _SCRATCH_HI or offset + length <= _SCRATCH_LO):
+        _ensure_snapshot()
+        if _cache is not None and offset + length <= len(_cache):
+            return _cache[offset:offset + length]
+    return _read_live(offset, length)
+
+
 def write_bytes(offset: int, data: bytes) -> None:
+    invalidate()  # memory is changing; the snapshot is now stale
     resp = _txn(f"WRITE {offset} {data.hex()}")
     if not resp.startswith("OK"):
         raise RuntimeError(f"Dusk WRITE failed at {offset:#x}: {resp!r}")
