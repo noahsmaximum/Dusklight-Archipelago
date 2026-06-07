@@ -1,3 +1,53 @@
+# 🎲 Archipelago — Twilight Princess on Dusklight (unofficial fork)
+
+This is an **unofficial fork** of [Archipelago](https://github.com/ArchipelagoMW/Archipelago) that adds a
+**Twilight Princess** world adapted for the [Dusklight](https://github.com/TwilitRealm/dusklight) native PC port
+(instead of the Dolphin emulator). It pairs with the native game fork:
+
+- 🎮 **Game + in-game bridge:** [noahsmaximum/dusklight @ `dusklight-Archipelago`](https://github.com/noahsmaximum/dusklight/tree/dusklight-Archipelago)
+- 🧩 **This repo:** the Archipelago client, world logic, and seed generation.
+
+The world lives in [`worlds/twilight_princess_apworld/`](worlds/twilight_princess_apworld). It is based on
+[WritingHusky's Twilight Princess apworld](https://github.com/WritingHusky/Twilight_Princess_apworld), but the transport
+is rewritten: instead of `dolphin_memory_engine`,
+[`dusk_bridge.py`](worlds/twilight_princess_apworld/dusk_bridge.py) talks to the native `dusk::archipelago` module over a
+localhost socket (`127.0.0.1:17354`), and client addresses become offsets into the live save struct that module serves.
+
+## Requirements
+
+- **Python 3.11–3.13** (Archipelago does **not** support 3.14).
+- A built, running copy of the [Dusklight AP fork](https://github.com/noahsmaximum/dusklight/tree/dusklight-Archipelago) with your save loaded.
+
+## Setup (Windows, headless client)
+
+```sh
+py -3.13 -m venv venv
+venv\Scripts\python -m pip install PyYAML==6.0.3 websockets==13.1 colorama jinja2 schema jellyfish platformdirs certifi typing_extensions orjson Pymem pathspec bsdiff4
+```
+
+The full `requirements.txt` also works (and adds the Kivy GUI), but the steps below run the client headless so Kivy is
+optional. Set the environment variable `SKIP_REQUIREMENTS_UPDATE=1` so Archipelago doesn't try to reinstall everything.
+
+## Generate, host, and play
+
+1. **Make a YAML.** Copy `worlds/twilight_princess_apworld/Twilight Princess.yaml` into `Players/` and set `name:` to
+   **your exact in-game save file name** — this is how the client authenticates.
+2. **Generate a seed:** `python Generate.py`
+3. **Host it:** `python MultiServer.py output/AP_<seed>.zip`
+4. **Launch Dusklight** (the game fork) with your disc and **load your save** (stand in the overworld).
+5. **Run the client:**
+   ```sh
+   python -m worlds.twilight_princess_apworld.TPClient --connect <server-host:port> --nogui
+   ```
+   It connects to the Archipelago server and to Dusklight on `127.0.0.1:17354`. Received items are granted in-game via
+   the native module, and locations you check are reported back to the server.
+
+> **Note:** the slot name in your YAML must equal your in-game save file name.
+
+---
+
+*Original Archipelago README below.*
+
 # [Archipelago](https://archipelago.gg) ![Discord Shield](https://discordapp.com/api/guilds/731205301247803413/widget.png?style=shield) | [Install](https://github.com/ArchipelagoMW/Archipelago/releases)
 
 Archipelago provides a generic framework for developing multiworld capability for game randomizers. In all cases,
