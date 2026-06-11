@@ -87,7 +87,16 @@ def _build_placement_table(
             item_name = LOOKUP_ID_TO_NAME.get(net_item.item)
             if item_name is None:
                 continue
-            display_id = ITEM_TABLE[item_name].item_id
+            item_data = ITEM_TABLE[item_name]
+            display_id = item_data.item_id
+            # Per-dungeon item ids are randomizer-specific; their get-model rows are
+            # rupee fallbacks. Display the native generic models instead.
+            display_id = {
+                "Small key": 0x20,  # dItemNo_SMALL_KEY_e
+                "Map": 0x23,        # dItemNo_MAP_e
+                "Compass": 0x24,    # dItemNo_COMPUS_e
+                "Big Key": 0x26,    # dItemNo_BOSS_KEY_e
+            }.get(item_data.type, display_id)
             if not isinstance(display_id, int):
                 continue
             if hint:
