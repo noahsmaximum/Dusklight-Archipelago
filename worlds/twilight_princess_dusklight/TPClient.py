@@ -45,6 +45,64 @@ CONNECTION_INITIAL_STATUS = "Dolphin connection has not been initiated."
 
 VALIDATION_TIME = 10
 
+# In-game display table: shows the AP-placed item at each location. Other players'
+# items display as a Poe Soul ("O_gD_tama") - the most otherworldly item with real
+# present-demo model resources (the Sol is an actor, not an item id).
+PLACEHOLDER_ITEM_ID = 0xE0
+
+APID_TO_LOCATION_DATA = {
+    TPLocation.get_apid(data.code): data
+    for data in LOCATION_TABLE.values()
+    if isinstance(data.code, int)
+}
+
+
+def _build_placement_table(ctx: "TPContext", scouts) -> dict[int, int]:
+    """Map scouted locations to the item id the game should display there.
+
+    Keys match the native module's lookup: (node << 16) | (byte offset << 8) | bit,
+    for Region-type (node memory) locations - the ones with native display hooks
+    (chests, freestanding items, heart pieces/containers, posted small keys).
+    """
+    table: dict[int, int] = {}
+    for net_item in scouts:
+        data = APID_TO_LOCATION_DATA.get(net_item.location)
+        if data is None or data.type != TPLocationType.Region:
+            continue
+        region = data.region.value if hasattr(data.region, "value") else data.region
+        if (
+            not isinstance(region, int)
+            or not isinstance(data.offset, int)
+            or not isinstance(data.bit, int)
+        ):
+            continue
+        if net_item.player == ctx.slot:
+            item_name = LOOKUP_ID_TO_NAME.get(net_item.item)
+            if item_name is None:
+                continue
+            display_id = ITEM_TABLE[item_name].item_id
+            if not isinstance(display_id, int):
+                continue
+        else:
+            display_id = PLACEHOLDER_ITEM_ID
+        table[(region << 16) | (data.offset << 8) | data.bit] = display_id
+    return table
+
+
+def _push_placements(ctx: "TPContext") -> None:
+    """Send the placement display table to the game (once per game connection)."""
+    table = getattr(ctx, "placement_table", None)
+    if not table or getattr(ctx, "placements_pushed", False):
+        return
+    if not dolphin_memory_engine.is_hooked():
+        return
+    try:
+        if dolphin_memory_engine.send_placements(table):
+            ctx.placements_pushed = True
+            logger.info(f"Sent {len(table)} item placements to the game")
+    except Exception as e:
+        logger.error(f"Failed to send placements: {e}")
+
 # CURR_HEALTH_ADDR = 0x804061C2
 # CURR_NODE_ADDR = 0x80406B38
 # SLOT_NAME_ADDR = 0x80406374
@@ -280,6 +338,32 @@ class TPContext(CommonContext):
                 logger.info(f"""Connected Using Seed & client version:{VERSION}""")
             self.server_data_built = False
             self.server_data = deepcopy(server_data)
+
+            # Scout every location in this world (free for own locations) so the game
+            # can display the actual placed items.
+            self.placement_table = {}
+            self.placements_pushed = False
+            scout_ids = list(self.missing_locations | self.checked_locations)
+            if scout_ids:
+                Utils.async_start(
+                    self.send_msgs(
+                        [
+                            {
+                                "cmd": "LocationScouts",
+                                "locations": scout_ids,
+                                "create_as_hint": 0,
+                            }
+                        ]
+                    )
+                )
+
+        elif cmd == "LocationInfo":
+            self.placement_table = _build_placement_table(self, args["locations"])
+            self.placements_pushed = False
+            if DEBUGGING:
+                logger.info(
+                    f"Debug: built placement table with {len(self.placement_table)} entries"
+                )
 
         elif cmd == "ReceivedItems":
             if args["index"] >= self.last_received_index:
@@ -1091,6 +1175,7 @@ async def dolphin_sync_task(ctx: TPContext) -> None:
                             base_server_data_connection(ctx.team, ctx.slot)
                         )
                         ctx.server_data_sent = True
+                    _push_placements(ctx)
                     await give_items(ctx)
                     await check_locations(ctx)
                     await validate_item(ctx)
@@ -1117,6 +1202,9 @@ async def dolphin_sync_task(ctx: TPContext) -> None:
                             logger.info(CONNECTION_CONNECTED_STATUS)
                             ctx.dolphin_status = CONNECTION_CONNECTED_STATUS
                             ctx.locations_checked = set()
+                            # New game connection: the native placement table was
+                            # cleared, so re-send it.
+                            ctx.placements_pushed = False
                             set_address()
                     except NameError as e:
                         logger.error(f"Global address not set: {e}")

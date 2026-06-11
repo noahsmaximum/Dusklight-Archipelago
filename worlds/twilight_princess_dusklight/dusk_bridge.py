@@ -161,6 +161,19 @@ def safe() -> bool:
     return resp.startswith("OK") and resp.strip().endswith("1")
 
 
+def send_placements(table: dict) -> bool:
+    """Push the location -> display-item table (PLCS, single bulk line).
+
+    Keys are the native location keys ((node<<16)|(byteOff<<8)|bit for Region
+    locations), values the TP item id to display. Replaces any prior table.
+    """
+    if not table:
+        return True
+    payload = ",".join(f"{k:x}:{v:x}" for k, v in table.items())
+    resp = _txn("PLCS " + payload)
+    return resp.startswith("OK")
+
+
 # ---- transport -------------------------------------------------------------
 
 def _txn(line: str) -> str:
