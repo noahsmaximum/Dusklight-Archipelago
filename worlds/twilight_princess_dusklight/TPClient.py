@@ -57,14 +57,19 @@ APID_TO_LOCATION_DATA = {
 }
 
 
-def _build_placement_table(ctx: "TPContext", scouts) -> dict[int, int]:
-    """Map scouted locations to the item id the game should display there.
+def _build_placement_table(
+    ctx: "TPContext", scouts
+) -> tuple[dict[int, int], dict[int, str]]:
+    """Map scouted locations to (display item id, pickup text) for the game.
 
     Keys match the native module's lookup: (node << 16) | (byte offset << 8) | bit,
     for Region-type (node memory) locations - the ones with native display hooks
     (chests, freestanding items, heart pieces/containers, posted small keys).
+    Text is only sent for other players' items (own items keep their native
+    get-message); the game substitutes it into the get-item window.
     """
     table: dict[int, int] = {}
+    texts: dict[int, str] = {}
     for net_item in scouts:
         data = APID_TO_LOCATION_DATA.get(net_item.location)
         if data is None or data.type != TPLocationType.Region:
@@ -76,6 +81,7 @@ def _build_placement_table(ctx: "TPContext", scouts) -> dict[int, int]:
             or not isinstance(data.bit, int)
         ):
             continue
+        key = (region << 16) | (data.offset << 8) | data.bit
         if net_item.player == ctx.slot:
             item_name = LOOKUP_ID_TO_NAME.get(net_item.item)
             if item_name is None:
@@ -85,8 +91,14 @@ def _build_placement_table(ctx: "TPContext", scouts) -> dict[int, int]:
                 continue
         else:
             display_id = PLACEHOLDER_ITEM_ID
-        table[(region << 16) | (data.offset << 8) | data.bit] = display_id
-    return table
+            try:
+                item_name = ctx.item_names.lookup_in_slot(net_item.item, net_item.player)
+            except Exception:
+                item_name = "a mysterious item"
+            player_name = ctx.player_names.get(net_item.player, f"Player {net_item.player}")
+            texts[key] = f"You got {item_name} for {player_name}!"
+        table[key] = display_id
+    return table, texts
 
 
 def _push_placements(ctx: "TPContext") -> None:
@@ -98,6 +110,9 @@ def _push_placements(ctx: "TPContext") -> None:
         return
     try:
         if dolphin_memory_engine.send_placements(table):
+            texts = getattr(ctx, "text_table", None)
+            if texts:
+                dolphin_memory_engine.send_texts(texts)
             ctx.placements_pushed = True
             logger.info(f"Sent {len(table)} item placements to the game")
     except Exception as e:
@@ -342,6 +357,7 @@ class TPContext(CommonContext):
             # Scout every location in this world (free for own locations) so the game
             # can display the actual placed items.
             self.placement_table = {}
+            self.text_table = {}
             self.placements_pushed = False
             scout_ids = list(self.missing_locations | self.checked_locations)
             if scout_ids:
@@ -358,7 +374,9 @@ class TPContext(CommonContext):
                 )
 
         elif cmd == "LocationInfo":
-            self.placement_table = _build_placement_table(self, args["locations"])
+            self.placement_table, self.text_table = _build_placement_table(
+                self, args["locations"]
+            )
             self.placements_pushed = False
             if DEBUGGING:
                 logger.info(

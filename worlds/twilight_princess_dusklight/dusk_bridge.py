@@ -174,6 +174,19 @@ def send_placements(table: dict) -> bool:
     return resp.startswith("OK")
 
 
+def send_texts(table: dict) -> bool:
+    """Push the location -> pickup-text table (PLCT, single bulk line).
+
+    Values are full replacement get-messages (UTF-8, hex-encoded). Replaces any
+    prior table.
+    """
+    if not table:
+        return True
+    payload = ",".join(f"{k:x}:{v.encode('utf-8').hex()}" for k, v in table.items())
+    resp = _txn("PLCT " + payload)
+    return resp.startswith("OK")
+
+
 # ---- transport -------------------------------------------------------------
 
 def _txn(line: str) -> str:
