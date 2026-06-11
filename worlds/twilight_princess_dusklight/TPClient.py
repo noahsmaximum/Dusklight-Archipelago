@@ -46,9 +46,9 @@ CONNECTION_INITIAL_STATUS = "Dolphin connection has not been initiated."
 VALIDATION_TIME = 10
 
 # In-game display table: shows the AP-placed item at each location. Other players'
-# items display as a Poe Soul ("O_gD_tama") - the most otherworldly item with real
-# present-demo model resources (the Sol is an actor, not an item id).
-PLACEHOLDER_ITEM_ID = 0xE0
+# items display as a Palace of Twilight Sol: the game build repurposes the unused
+# LIGHT_DROP (0xAE) get-item row to point at the Sol model ("P_LBswBC").
+PLACEHOLDER_ITEM_ID = 0xAE
 
 APID_TO_LOCATION_DATA = {
     TPLocation.get_apid(data.code): data
