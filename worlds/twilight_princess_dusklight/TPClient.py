@@ -82,6 +82,7 @@ def _build_placement_table(
         ):
             continue
         key = (region << 16) | (data.offset << 8) | data.bit
+        hint = getattr(ctx, "vanilla_hints", {}).get(data.code)
         if net_item.player == ctx.slot:
             item_name = LOOKUP_ID_TO_NAME.get(net_item.item)
             if item_name is None:
@@ -89,6 +90,9 @@ def _build_placement_table(
             display_id = ITEM_TABLE[item_name].item_id
             if not isinstance(display_id, int):
                 continue
+            if hint:
+                # Replacing the native text is the only way to append the hint.
+                texts[key] = f"You got {item_name}!\n{hint}"
         else:
             display_id = PLACEHOLDER_ITEM_ID
             try:
@@ -96,7 +100,10 @@ def _build_placement_table(
             except Exception:
                 item_name = "a mysterious item"
             player_name = ctx.player_names.get(net_item.player, f"Player {net_item.player}")
-            texts[key] = f"You got {item_name} for {player_name}!"
+            text = f"You got {item_name} for {player_name}!"
+            if hint:
+                text += f"\n{hint}"
+            texts[key] = text
         table[key] = display_id
     return table, texts
 
@@ -359,6 +366,14 @@ class TPContext(CommonContext):
             self.placement_table = {}
             self.text_table = {}
             self.placements_pushed = False
+            # Where each location's vanilla item ended up (JSON keys arrive as str)
+            try:
+                self.vanilla_hints = {
+                    int(k): v
+                    for k, v in (args["slot_data"].get("VanillaHints") or {}).items()
+                }
+            except Exception:
+                self.vanilla_hints = {}
             scout_ids = list(self.missing_locations | self.checked_locations)
             if scout_ids:
                 Utils.async_start(

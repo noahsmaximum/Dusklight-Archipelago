@@ -1582,9 +1582,46 @@ class TPWorld(World):
             "World Version": VERSION,
             "DeathLink": self.options.death_link.value,
             "Settings": self.get_settings_map(),
+            "VanillaHints": self._build_vanilla_hints(),
         }
 
         return slot_data
+
+    def _build_vanilla_hints(self) -> dict[int, str]:
+        """Map each own location code -> where that location's VANILLA item ended up.
+
+        Shown in-game appended to the pickup text. Multiple copies of an item are
+        matched one placement per occurrence (consumed in fill order).
+        """
+        from .VanillaItems import VANILLA_ITEMS
+
+        # All placements of THIS world's items across the multiworld, by item name.
+        placements: dict[str, list] = {}
+        for loc in self.multiworld.get_filled_locations():
+            if (
+                loc.item is not None
+                and loc.item.player == self.player
+                and loc.item.code is not None
+            ):
+                placements.setdefault(loc.item.name, []).append(loc)
+
+        hints: dict[int, str] = {}
+        for loc_name, data in LOCATION_TABLE.items():
+            if not isinstance(data.code, int):
+                continue
+            vanilla = VANILLA_ITEMS.get(loc_name)
+            if vanilla is None:
+                continue
+            spots = placements.get(vanilla)
+            if not spots:
+                continue
+            spot = spots.pop(0)
+            if spot.player == self.player:
+                hints[data.code] = f"{vanilla} is actually at {spot.name}."
+            else:
+                owner = self.multiworld.get_player_name(spot.player)
+                hints[data.code] = f"{vanilla} is in {owner}'s game at {spot.name}."
+        return hints
 
     def collect_item(
         self, state: "CollectionState", item: "Item", remove: bool = False
