@@ -1617,6 +1617,10 @@ class TPWorld(World):
                 continue
             spot = spots.pop(0)
             if spot.player == self.player:
+                if spot.name == loc_name:
+                    # The vanilla item is right here (unshuffled/prefilled) - a
+                    # self-referential hint is just noise.
+                    continue
                 hints[data.code] = f"{vanilla} is actually at {spot.name}."
             else:
                 owner = self.multiworld.get_player_name(spot.player)

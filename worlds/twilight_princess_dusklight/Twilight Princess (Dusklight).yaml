@@ -234,10 +234,10 @@ Twilight Princess (Dusklight):
     # 
     # Note:
     # Not shuffling Dungeons will overwrite this to vanilla, unless you selected start with
-    vanilla: 50
+    vanilla: 0
     own_dungeon: 0
     any_dungeon: 0
-    anywhere: 0
+    anywhere: 50
     startwith: 0
 
   dungeon_rewards_progression:

@@ -57,6 +57,21 @@ APID_TO_LOCATION_DATA = {
 }
 
 
+def _wrap_text(text: str, width: int = 38) -> str:
+    """Word-wrap for the in-game message box (it does not auto-wrap)."""
+    out_lines = []
+    for line in text.split("\n"):
+        cur = ""
+        for word in line.split(" "):
+            if cur and len(cur) + 1 + len(word) > width:
+                out_lines.append(cur)
+                cur = word
+            else:
+                cur = f"{cur} {word}" if cur else word
+        out_lines.append(cur)
+    return "\n".join(out_lines)
+
+
 def _build_placement_table(
     ctx: "TPContext", scouts
 ) -> tuple[dict[int, int], dict[int, str]]:
@@ -101,7 +116,7 @@ def _build_placement_table(
                 continue
             if hint:
                 # Replacing the native text is the only way to append the hint.
-                texts[key] = f"You got {item_name}!\n{hint}"
+                texts[key] = _wrap_text(f"You got {item_name}!\n{hint}")
         else:
             display_id = PLACEHOLDER_ITEM_ID
             try:
@@ -112,7 +127,7 @@ def _build_placement_table(
             text = f"You got {item_name} for {player_name}!"
             if hint:
                 text += f"\n{hint}"
-            texts[key] = text
+            texts[key] = _wrap_text(text)
         table[key] = display_id
     return table, texts
 
