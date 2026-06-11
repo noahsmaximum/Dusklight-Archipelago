@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from copy import deepcopy
 import json
+import logging
 import os
 from typing import Any, ClassVar, Optional
 
@@ -194,9 +195,15 @@ class TPWorld(World):
         """
         # If overworld is not shuffled then override for vanilla placements if in overworld (locations already excluded but prefill needs note)
         if self.options.overworld_shuffled.value == OverWoldShuffled.option_false:
-            raise OptionError(
-                "[Twilight Princess] functionality for disabling overworld shuffle is not yet implemented, Please enable Overworld Shuffle to generate"
+            # Disabling overworld shuffle is not implemented yet; raising here makes
+            # the generator hang in a retry loop, so force the option on instead.
+            logging.warning(
+                "[Twilight Princess (Dusklight)] overworld_shuffled: false is not "
+                "supported yet - forcing it on for %s",
+                self.multiworld.get_player_name(self.player),
             )
+            self.options.overworld_shuffled.value = OverWoldShuffled.option_true
+        if False:  # unreachable: kept for the planned non-shuffled overworld support
             self.options.golden_bugs_shuffled.value = GoldenBugsShuffled.option_false
             self.options.shop_items_shuffled.value = ShopItemsShuffled.option_false
             self.options.heart_piece_shuffled.value = HeartPieceShuffled.option_false
