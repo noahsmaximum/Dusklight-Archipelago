@@ -31,13 +31,16 @@
 #include <yaml-cpp/yaml.h>
 #include <fmt/format.h>
 
+#include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <cstring>
 #include <filesystem>
 #include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <mutex>
+#include <optional>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
@@ -64,6 +67,7 @@ constexpr int64_t kItemIdBase = 0x54500000;
 Client g_client;
 
 void after_seed_activated();
+void apply_death_link_tags();
 
 struct Conn {
     std::string server = "archipelago.gg:38281";
@@ -76,6 +80,7 @@ struct SaveState {
     bool goal = false;
     std::string seed;     // AP seed name this save belongs to
     std::string slot;
+    int deathLink = -1;   // -1 follow the YAML, 0 off, 1 on (toggled from the Archipelago tab)
 };
 
 enum class Phase {
@@ -138,6 +143,13 @@ ItemGiveHandle g_observer = 0;
 UiMenuTabHandle g_menuTab = 0;
 UiWindowHandle g_statusWindow = 0;
 UiElementHandle g_statusWindowText = 0;
+
+// Death link (see "Death link" below)
+bool g_deathLinkSlot = false;   // the YAML's choice, from slot_data
+bool g_deathSent = false;       // this death is handled; cleared once Link is alive again
+double g_lastDeathTime = 0.0;   // time on the death we sent, to recognise its echo
+int g_killFrames = 0;           // > 0: a death now is the one we were sent, not a new one
+std::optional<std::string> g_pendingDeath;
 
 // Config
 ConfigVarHandle g_cfgServer = 0;
@@ -254,6 +266,7 @@ bool read_blob(const char* name, T& out) {
         out.goal = j.value("goal", false);
         out.seed = j.value("seed", "");
         out.slot = j.value("slot", "");
+        out.deathLink = j.value("death_link", -1);
     }
     return true;
 }
@@ -266,7 +279,7 @@ void write_conn() {
 
 void write_state() {
     const std::string s = json{{"received", g_state.received}, {"goal", g_state.goal},
-        {"seed", g_state.seed}, {"slot", g_state.slot}}
+        {"seed", g_state.seed}, {"slot", g_state.slot}, {"death_link", g_state.deathLink}}
                               .dump();
     svc_mng.save->set_blob(svc_mng.mod_ctx, kStateBlob, s.data(), s.size());
 }
@@ -496,6 +509,10 @@ void on_connected(const json& p) {
         return;
     }
     g_lastSlotData = slotData;
+    const json deathLink = slotData.value("death_link", json(false));
+    g_deathLinkSlot = deathLink.is_boolean() ? deathLink.get<bool>()
+                                             : deathLink.is_number() && deathLink.get<int>() != 0;
+    apply_death_link_tags();
     g_checked.clear();
     for (const auto& id : p.value("checked_locations", json::array())) {
         g_checked.insert(id.get<int64_t>());
@@ -652,6 +669,8 @@ bool ap_item_text(ModContext*, const MessageOverrideContext*, MessageTextData* o
 DEFINE_HOOK(&daDitem_c::set_mtx, ApDitemSetMtx);
 DEFINE_HOOK(&daItem_c::setBaseMtx, ApItemSetBaseMtx);
 DEFINE_HOOK(dStage_changeScene, ApChangeScene);
+DEFINE_HOOK(&daAlink_c::procCoDeadInit, ApLinkDeadInit);
+DEFINE_HOOK(&daAlink_c::procCoFogDeadInit, ApLinkFogDeadInit);
 // Ganondorf's execute is file-local; hook it by translation unit alias.
 DEFINE_HOOK_SYMBOL("src/d/actor/d_a_b_gnd.cpp#daB_GND_Execute", int(b_gnd_class*), ApGanondorf);
 
@@ -730,6 +749,119 @@ HookAction pre_change_scene(ModContext*, void*, void*, void*) {
 bool in_gameplay() {
     return g_phase == Phase::Playing && !g_needsRegen && randomizer_IsActive() &&
            !playerIsOnTitleScreen() && dComIfGp_getPlayer(0) != nullptr;
+}
+
+// ---------------------------------------------------------------------------------------
+// Death link
+//
+// Every real death goes through daAlink_c::procCoDeadInit (procCoFogDeadInit for the fog),
+// which checkDeadAction() calls once life is 0 and no bottled fairy can step in. A fairy
+// save takes a different branch and never gets here, so it isn't a death. Killing Link is
+// the same thing in reverse: set life to 0 and let the game's own check do the rest,
+// fairies included.
+
+bool death_link_on() {
+    return g_state.deathLink >= 0 ? g_state.deathLink == 1 : g_deathLinkSlot;
+}
+
+void apply_death_link_tags() {
+    g_client.setTags(death_link_on() ? std::vector<std::string>{"DeathLink"}
+                                     : std::vector<std::string>{});
+}
+
+bool link_is_dead(const daAlink_c* link) {
+    return link->mProcID == daAlink_c::PROC_DEAD || link->mProcID == daAlink_c::PROC_FOG_DEAD;
+}
+
+void on_link_died(daAlink_c* link, const char* how) {
+    // The init returns early if Link was already in the death proc, so check he got there.
+    if (link == nullptr || !link_is_dead(link) || g_deathSent) {
+        return;
+    }
+    g_deathSent = true;
+    if (g_killFrames > 0) {
+        g_killFrames = 0;  // the death we were sent landing: don't bounce it back
+        ap_log("death link: received death landed");
+        return;
+    }
+    if (!death_link_on() || !in_gameplay() || g_client.state() != State::Connected) {
+        return;
+    }
+    const std::string who = g_client.info().slot;
+    g_lastDeathTime = std::chrono::duration<double>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    g_client.sendBounce({
+        {"tags", json::array({"DeathLink"})},
+        {"data", {{"time", g_lastDeathTime}, {"source", who}, {"cause", who + " " + how}}},
+    });
+    ap_log(fmt::format("death link: sent ({})", how));
+}
+
+void post_link_dead_init(ModContext*, void* args, void*, void*) {
+    const bool drowned = dComIfGp_getOxygenShowFlag() && dComIfGp_getNowOxygen() == 0;
+    on_link_died(mods::arg<daAlink_c*>(args, 0), drowned ? "drowned." : "was defeated.");
+}
+
+void post_link_fog_dead_init(ModContext*, void* args, void*, void*) {
+    on_link_died(mods::arg<daAlink_c*>(args, 0), "was lost in the fog.");
+}
+
+void on_bounced(const json& p) {
+    const json tags = p.value("tags", json::array());
+    const bool isDeath = std::any_of(tags.begin(), tags.end(),
+        [](const json& t) { return t.is_string() && t.get<std::string>() == "DeathLink"; });
+    if (!isDeath || !death_link_on()) {
+        return;
+    }
+    const json data = p.value("data", json::object());
+    const json time = data.value("time", json());
+    if (time.is_number() && std::abs(time.get<double>() - g_lastDeathTime) < 1e-3) {
+        return;  // our own death, echoed back by the server
+    }
+    const json source = data.value("source", json());
+    const json cause = data.value("cause", json());
+    const std::string who = source.is_string() ? source.get<std::string>() : "Someone";
+    g_pendingDeath = cause.is_string() && !cause.get<std::string>().empty() ?
+                         cause.get<std::string>() : who + " died.";
+    ap_log("death link: received from " + who);
+}
+
+void tick_death_link() {
+    if (!in_gameplay()) {
+        return;
+    }
+    auto* link = daAlink_getAlinkActorClass();
+    if (link == nullptr) {
+        return;
+    }
+    const bool dead = link_is_dead(link) || dComIfGs_getLife() == 0;
+    if (!dead) {
+        g_deathSent = false;  // alive again, so the next death is a new one
+    }
+    if (g_killFrames > 0) {
+        // Alive a few frames after we zeroed his life means a fairy saved him. Stop treating
+        // the next death as ours, or a real one moments later would be swallowed.
+        if (!dead && g_killFrames < 598) {
+            g_killFrames = 0;
+            ap_log("death link: a fairy saved Link from the received death");
+        } else {
+            --g_killFrames;
+        }
+    }
+    if (!g_pendingDeath) {
+        return;
+    }
+    if (dead) {
+        g_pendingDeath.reset();  // already dying; there's nothing more to take
+        return;
+    }
+    if (dComIfGp_event_runCheck()) {
+        return;  // wait out the cutscene or conversation
+    }
+    toast("Death link", *g_pendingDeath, "warning", 5000);
+    g_pendingDeath.reset();
+    g_killFrames = 600;
+    dComIfGs_setLife(0);
 }
 
 void log_stage_changes() {
@@ -1121,6 +1253,19 @@ ModResult build_status_tab(ModContext* ctx, UiWindowHandle, UiElementHandle left
         return g_state.goal || g_client.state() != State::Connected;
     };
     svc_mng.ui->pane_add_control(ctx, left, &goal, nullptr);
+    UiControlDesc dl = UI_CONTROL_DESC_INIT;
+    dl.kind = UI_CONTROL_TOGGLE;
+    dl.label = "Death link";
+    dl.help_rml = "When anyone else with death link dies, so do you, and the other way round. "
+                  "Starts from your YAML; changing it here sticks to this save.";
+    dl.get = [](ModContext*, void*, UiControlValue* out) { out->bool_value = death_link_on(); };
+    dl.set = [](ModContext*, void*, const UiControlValue* v) {
+        g_state.deathLink = v->bool_value ? 1 : 0;
+        write_state();
+        apply_death_link_tags();
+    };
+    dl.is_disabled = [](ModContext*, void*) { return g_phase != Phase::Playing; };
+    svc_mng.ui->pane_add_control(ctx, left, &dl, nullptr);
     UiControlDesc b2 = UI_CONTROL_DESC_INIT;
     b2.kind = UI_CONTROL_BUTTON;
     b2.label = "Disconnect";
@@ -1181,6 +1326,7 @@ ModResult activate() {
     g_client.onItems = on_items;
     g_client.onPrint = on_print;
     g_client.onDisconnected = on_disconnected;
+    g_client.onBounced = on_bounced;
 
     auto reg_string = [](const char* name, ConfigVarHandle& out) {
         ConfigVarDesc d = CONFIG_VAR_DESC_INIT;
@@ -1214,6 +1360,13 @@ ModResult activate() {
         mods::log::error("archipelago: failed to install hooks");
         return MOD_ERROR;
     }
+    // Separate from the hooks above: if these ever fail to resolve on a future Dusklight,
+    // lose death link rather than the whole mode.
+    if (mods::hook::add_post<ApLinkDeadInit>(post_link_dead_init) != MOD_OK ||
+        mods::hook::add_post<ApLinkFogDeadInit>(post_link_fog_dead_init) != MOD_OK)
+    {
+        mods::log::error("archipelago: death link hooks failed to install; deaths won't be sent");
+    }
 
     UiMenuTabDesc tab = UI_MENU_TAB_DESC_INIT;
     tab.label = "Archipelago";
@@ -1237,6 +1390,12 @@ void deactivate() {
     mods::hook::uninstall<ApItemSetBaseMtx>();
     mods::hook::uninstall<ApChangeScene>();
     mods::hook::uninstall<ApGanondorf>();
+    mods::hook::uninstall<ApLinkDeadInit>();
+    mods::hook::uninstall<ApLinkFogDeadInit>();
+    g_pendingDeath.reset();
+    g_killFrames = 0;
+    g_deathSent = false;
+    g_deathLinkSlot = false;
     if (g_menuTab != 0) {
         svc_mng.ui->unregister_menu_tab(svc_mng.mod_ctx, g_menuTab);
         g_menuTab = 0;
@@ -1268,6 +1427,7 @@ void tick() {
         scan_locations();
         flush_checks();
         deliver_items();
+        tick_death_link();
     }
 }
 

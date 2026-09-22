@@ -54,6 +54,9 @@ public:
     void sendGoal();
     void sendSync();
     void sendBounce(const json& bounce);
+    // Tags go out with Connect, so a reconnect keeps them; changing them while connected
+    // sends ConnectUpdate. "DeathLink" here is what puts us on the death link channel.
+    void setTags(const std::vector<std::string>& tags);
     void say(const std::string& text);
 
     State state() const { return mState; }
@@ -80,6 +83,7 @@ private:
     std::vector<std::string> mUrls;
     size_t mUrlIndex = 0;
     TcpWebSocket mSocket;
+    std::vector<std::string> mTags;
     int mSlot = -1;
     std::string mSeedName;
     std::vector<std::string> mPlayerNames;

@@ -54,6 +54,17 @@ room with an expired, self-signed or mismatched certificate is refused rather th
 trusted. If you run your own server with a self-signed certificate, connect to it over plain
 `ws://` instead.
 
+### Death link
+
+Set `death_link: true` in your YAML and you share deaths with everyone else in the
+multiworld who has it on: when one of you dies, you all do. A bottled fairy still saves
+you from a death someone else sends, just as it would from your own, and a fairy save
+doesn't count as dying. A death that arrives during a cutscene or conversation waits until
+it's over.
+
+You can switch it on or off for a save from the **Archipelago** tab in the menu bar (F1),
+whatever the YAML said.
+
 ## Presets
 
 `presets/` holds four ready-made YAMLs, verified to generate and to rebuild in-game:

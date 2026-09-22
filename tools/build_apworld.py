@@ -1,6 +1,6 @@
 """Vendors the randomizer data into the apworld and packages tp_dusklight.apworld.
 
-usage: python tools/build_apworld.py [--install <Archipelago worlds dir>] [--out <file.apworld>]
+usage: python tools/build_apworld.py [--install <Archipelago>/custom_worlds] [--out <file.apworld>]
 """
 from __future__ import annotations
 
@@ -28,7 +28,8 @@ def sync_data() -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--install", type=Path, help="copy the world folder into this worlds/ dir")
+    ap.add_argument("--install", type=Path,
+                    help="copy the built .apworld into this dir (Archipelago's custom_worlds)")
     ap.add_argument("--out", type=Path, default=ROOT / "build" / "tp_dusklight.apworld")
     args = ap.parse_args()
 
@@ -44,11 +45,17 @@ def main() -> None:
     print(f"wrote {args.out}")
 
     if args.install:
-        target = args.install / "tp_dusklight"
-        if target.exists():
-            shutil.rmtree(target)
-        shutil.copytree(SRC, target, ignore=shutil.ignore_patterns("__pycache__"))
-        print(f"installed into {target}")
+        # custom_worlds only loads .apworld files: an unzipped folder there fails to import,
+        # and Archipelago then quietly uses any older copy it finds under worlds/ instead.
+        stale = args.install / "tp_dusklight"
+        if stale.is_dir():
+            shutil.rmtree(stale)
+        target = args.install / "tp_dusklight.apworld"
+        shutil.copyfile(args.out, target)
+        print(f"installed {target}")
+        shadow = args.install.parent / "worlds" / "tp_dusklight"
+        if shadow.exists():
+            print(f"WARNING: {shadow} exists and will be loaded instead. Remove it.")
 
 
 if __name__ == "__main__":

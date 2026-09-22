@@ -9,8 +9,8 @@ import re
 from dataclasses import make_dataclass
 from typing import Any
 
-from Options import (Choice, DefaultOnToggle, PerGameCommonOptions, Range, StartInventoryPool,
-                     Toggle)
+from Options import (Choice, DeathLink, DefaultOnToggle, PerGameCommonOptions, Range,
+                     StartInventoryPool, Toggle)
 
 from . import data
 
@@ -88,6 +88,8 @@ for _info in data.settings().values():
 
 
 _fields.append(("start_inventory_from_pool", StartInventoryPool))
+# Archipelago's own option, not a randomizer setting: the mod joins the DeathLink channel.
+_fields.append(("death_link", DeathLink))
 
 TPOptions = make_dataclass("TPOptions", _fields, bases=(PerGameCommonOptions,))
 

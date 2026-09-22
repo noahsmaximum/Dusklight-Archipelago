@@ -183,7 +183,7 @@ void Client::handle(const json& p) {
             // Other worlds' items + starting inventory. Items at our own locations are given
             // in-game by the rebuilt seed itself.
             {"items_handling", 0b101},
-            {"tags", json::array()},
+            {"tags", mTags},
             {"slot_data", true},
         }, {{"cmd", "GetDataPackage"}, {"games", games}}}));
     } else if (cmd == "Connected") {
@@ -264,6 +264,16 @@ void Client::sendGoal() {
 void Client::sendSync() {
     if (mState == State::Connected) {
         send(json::array({{{"cmd", "Sync"}}}));
+    }
+}
+
+void Client::setTags(const std::vector<std::string>& tags) {
+    if (tags == mTags) {
+        return;
+    }
+    mTags = tags;
+    if (mState == State::Connected) {
+        send(json::array({{{"cmd", "ConnectUpdate"}, {"tags", mTags}}}));
     }
 }
 
