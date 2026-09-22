@@ -810,6 +810,32 @@ F_SP108:
         - 9
         - 14
 
+    # Add the Midna Hint for the Coro Window midna jump to all layers
+    # (normally it's just on the twilight layer)
+    - action: add
+      name: Mhint
+      parameters: 0x3FFFFFFF
+      position:
+        x: -12494.08984375
+        y: 270.837921142578
+        z: -12351.1181640625
+      angle:
+        x: 0x16FF
+        y: 0xFF00
+        z: 0x07D9
+      set id: 0xFFFF
+      scale:
+        x: 24
+        y: 10
+        z: 24
+      layers:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 5
+        - 9
+
     # Add Coro actor to twilight layer
     - action: add
       name: Kkri
@@ -947,6 +973,7 @@ F_SP111:
         - 0
         - 2
         - 3
+        - 4
 
     # Golden Wolf in Kakariko Graveyard
     - action: patch
@@ -968,6 +995,7 @@ F_SP111:
       layers:
         - 2
         - 3
+        - 4
 
     # Add hint sign behind zora grave
     - action: add
@@ -987,6 +1015,7 @@ F_SP111:
         - 0
         - 2
         - 3
+        - 4
         - 14
     
     # Add entrance coming from lake hylia (entrance ID 5000)
@@ -1006,6 +1035,7 @@ F_SP111:
         - 0
         - 2
         - 3
+        - 4
         - 14
 
 # Zora's Domain
@@ -2040,7 +2070,7 @@ F_SP115:
         - 1
         - 3
 
-    # Spawn a red rupee behind the canon so players always have
+    # Spawn a red rupee behind the cannon so players always have
     # enough money for it
     - action: add
       name: item
@@ -3017,6 +3047,33 @@ F_SP121:
       layers:
         - 0
         - 6
+        - 14
+
+    # Move spawn from Eldin Lantern Cave in front of boulder
+    - action: patch
+      name: Link
+      parameters: 0xFF00503F
+      position:
+        x: -8474.4833984375
+        y: -6700
+        z: 67249.46875
+      angle:
+        x: 0x0000
+        y: 0x893F
+        z: 0x000F
+      set id: 0xFFFF
+      patch:
+        # Change spawn to not be in front of rock
+        position:
+          x: -8700.0
+          y: -6695.0
+          z: 66200.0
+      layers:
+        - 0
+        - 6
+        - 9
+        - 10
+        - 13
         - 14
 
   # Room 6 - Faron Field

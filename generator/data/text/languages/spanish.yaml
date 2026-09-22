@@ -152,6 +152,14 @@ Foolish Item:
   Cryptic:
     Text: a {chilly surprise}
 
+Archipelago Item:
+  Standard:
+    Text: Objeto de Archipelago
+  Pretty:
+    Text: "un {objeto de Archipelago}"
+  Cryptic:
+    Text: "un {objeto de otro mundo}"
+
 Ordon Spring Portal:
   Standard:
     Text: Ordon Spring Portal
@@ -2885,13 +2893,13 @@ Lake Hylia Burrowing Twilit Insect:
   Cryptic:
     Text: the {Lake Hylia Burrowing Twilit Insect}
 
-Lake Hylia Twilit Insect Behind Canon:
+Lake Hylia Twilit Insect Behind Cannon:
   Standard:
-    Text: Lake Hylia Twilit Insect Behind Canon
+    Text: Lake Hylia Twilit Insect Behind Cannon
   Pretty:
-    Text: the {Lake Hylia Twilit Insect Behind Canon}
+    Text: the {Lake Hylia Twilit Insect Behind Cannon}
   Cryptic:
-    Text: the {Lake Hylia Twilit Insect Behind Canon}
+    Text: the {Lake Hylia Twilit Insect Behind Cannon}
 
 Lake Hylia Twilit Insect on Docks:
   Standard:

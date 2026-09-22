@@ -175,15 +175,15 @@
     Snowpeak Ruins West Courtyard Buried Chest: Can_Dig
     Snowpeak Ruins Courtyard Central Chest: Can_Break_Ice
   Exits:
-    Snowpeak Ruins West Canon Room Near Courtyard: Can_Open_Doors
+    Snowpeak Ruins West Cannon Room Near Courtyard: Can_Open_Doors
     Snowpeak Ruins East Courtyard: Can_Break_Ice
     Snowpeak Ruins West Courtyard Hallway Near Ladder: Can_Open_Doors and (count(Snowpeak_Ruins_Small_Key, 4) or Small_Keys == Keysy)
-    Darkhammer Miniboss Room: Can_Open_Doors and (Ball_and_Chain or (Can_Launch_Canonball and 'Can_Load_Snowpeak_West_Courtyard_Hallway_Canonball_Holder'))
+    Darkhammer Miniboss Room: Can_Open_Doors and (Ball_and_Chain or (Can_Launch_Cannonball and 'Can_Load_Snowpeak_West_Courtyard_Hallway_Cannonball_Holder'))
 
 - Name: Snowpeak Ruins West Courtyard Hallway Near Ladder
   Region: Snowpeak Ruins
   Events:
-    Can Load Snowpeak West Courtyard Hallway Canonball Holder: Human_Link
+    Can Load Snowpeak West Courtyard Hallway Cannonball Holder: Human_Link
   Exits:
     Snowpeak Ruins West Courtyard North Balcony: Can_Climb_Ladders and 'Can_Kill_Snowpeak_Courtyard_Balcony_Freezard'
     Snowpeak Ruins West Hallway Near Caged Freezard Room: "'Can_Push_Snowpeak_West_Courtyard_Hallway_Block'"
@@ -192,7 +192,7 @@
 - Name: Snowpeak Ruins West Hallway Near Caged Freezard Room
   Region: Snowpeak Ruins
   Events:
-    Can Load Snowpeak Hallway to Caged Freezard Canonball Holder: Human_Link
+    Can Load Snowpeak Hallway to Caged Freezard Cannonball Holder: Human_Link
     Can Push Snowpeak West Courtyard Hallway Block: Nothing
   Exits:
     Snowpeak Ruins Caged Freezard Room First Floor: Can_Open_Doors
@@ -202,7 +202,7 @@
   Region: Snowpeak Ruins
   Events:
     Can Break Snowpeak Balcony Ice Wall Shortcut: Can_Break_Ice
-    Can Kill Snowpeak Courtyard Balcony Freezard: Can_Launch_Canonball and 'Can_Load_Snowpeak_Double_Freezard_Room_Canonball_Holder'
+    Can Kill Snowpeak Courtyard Balcony Freezard: Can_Launch_Cannonball and 'Can_Load_Snowpeak_Double_Freezard_Room_Cannonball_Holder'
   Exits:
     Snowpeak Ruins Double Freezard Room Behind Freezard: Can_Open_Doors
     Snowpeak Ruins West Courtyard: Nothing
@@ -215,24 +215,24 @@
     Snowpeak Ruins Chapel: Can_Open_Doors
     Snowpeak Ruins Boss Room: Snowpeak_Ruins_Bedroom_Key or Big_Keys == Keysy
 
-# SNOWPEAK RUINS WEST CANON ROOM
+# SNOWPEAK RUINS WEST CANNON ROOM
 
-- Name: Snowpeak Ruins West Canon Room Near Courtyard
+- Name: Snowpeak Ruins West Cannon Room Near Courtyard
   Region: Snowpeak Ruins
   Events:
-    Can Launch West Canon Room Canonballs: Can_Launch_Canonball
+    Can Launch West Cannon Room Cannonballs: Can_Launch_Cannonball
   Locations:
     Snowpeak Ruins West Cannon Room Central Chest: Can_Break_Ice
-    Snowpeak Ruins West Cannon Room Corner Chest: Can_Break_Ice or 'Can_Launch_West_Canon_Room_Canonballs'
+    Snowpeak Ruins West Cannon Room Corner Chest: Can_Break_Ice or 'Can_Launch_West_Cannon_Room_Cannonballs'
   Exits:
-    Snowpeak Ruins West Canon Room Near Wooden Beam Room: Can_Break_Ice or 'Can_Launch_West_Canon_Room_Canonballs'
+    Snowpeak Ruins West Cannon Room Near Wooden Beam Room: Can_Break_Ice or 'Can_Launch_West_Cannon_Room_Cannonballs'
     Snowpeak Ruins West Courtyard: Can_Open_Doors
 
-- Name: Snowpeak Ruins West Canon Room Near Wooden Beam Room
+- Name: Snowpeak Ruins West Cannon Room Near Wooden Beam Room
   Region: Snowpeak Ruins
   Exits:
     Snowpeak Ruins Wooden Beam Room First Floor: Can_Open_Doors
-    Snowpeak Ruins West Canon Room Near Courtyard: Can_Break_Ice or 'Can_Launch_West_Canon_Room_Canonballs'
+    Snowpeak Ruins West Cannon Room Near Courtyard: Can_Break_Ice or 'Can_Launch_West_Cannon_Room_Cannonballs'
 
 # SNOWPEAK RUINS WOODEN BEAM ROOM
 
@@ -242,7 +242,7 @@
     Snowpeak Ruins Wooden Beam Central Chest: Can_Defeat_Ice_Keese
     Snowpeak Ruins Wooden Beam Northwest Chest: Can_Defeat_Ice_Keese
   Exits:
-    Snowpeak Ruins West Canon Room Near Wooden Beam Room: Can_Open_Doors
+    Snowpeak Ruins West Cannon Room Near Wooden Beam Room: Can_Open_Doors
 
 - Name: Snowpeak Ruins Wooden Beam Room Second Floor
   Region: Snowpeak Ruins
@@ -275,7 +275,7 @@
 - Name: Snowpeak Ruins Caged Freezard Room Second Floor
   Region: Snowpeak Ruins
   Events:
-    Can Launch Snowpeak Caged Freezard Room Canonballs: Can_Launch_Canonball and Ball_and_Chain and 'Can_Load_Snowpeak_Hallway_to_Caged_Freezard_Canonball_Holder'
+    Can Launch Snowpeak Caged Freezard Room Cannonballs: Can_Launch_Cannonball and Ball_and_Chain and 'Can_Load_Snowpeak_Hallway_to_Caged_Freezard_Cannonball_Holder'
   Exits:
     Snowpeak Ruins Wooden Beam Room Second Floor: Can_Open_Doors
     Snowpeak Ruins Room Below Broken Floor: Can_Smash
@@ -313,7 +313,7 @@
   Region: Snowpeak Ruins
   Events:
     Can Push Snowpeak Double Freezard Room Block: Can_Defeat_Freezard
-    Can Load Snowpeak Double Freezard Room Canonball Holder: Can_Defeat_Freezard and 'Can_Launch_Snowpeak_Caged_Freezard_Room_Canonballs' and 'Can_Push_Snowpeak_Double_Freezard_Room_Block'
+    Can Load Snowpeak Double Freezard Room Cannonball Holder: Can_Defeat_Freezard and 'Can_Launch_Snowpeak_Caged_Freezard_Room_Cannonballs' and 'Can_Push_Snowpeak_Double_Freezard_Room_Block'
   Exits:
     Snowpeak Ruins Double Freezard Room Behind Freezard: Can_Defeat_Freezard
     Snowpeak Ruins Caged Freezard Room Second Floor: "'Can_Push_Snowpeak_Double_Freezard_Room_Block'"

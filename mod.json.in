@@ -1,7 +1,7 @@
 {
-  "id": "dev.twilitrealm.randomizer",
-  "name": "Dusklight Randomizer",
-  "version": "@RANDOMIZER_VERSION@",
-  "author": "Twilit Realm",
-  "description": "Shuffles items and equipment all over the game, giving you countless new ways to enjoy Dusklight."
+  "id": "com.noahsmaximum.dusklight_archipelago",
+  "name": "Dusklight Archipelago",
+  "version": "@ARCHIPELAGO_VERSION@",
+  "author": "noahsmaximum (built on the Twilit Realm randomizer)",
+  "description": "Archipelago multiworld for Dusklight. Built on the official randomizer: connect to a server from the Archipelago game mode and the whole seed is rebuilt in-game."
 }

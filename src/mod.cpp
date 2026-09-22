@@ -1,8 +1,11 @@
 #include "mods/service.hpp"
 #include "mods/svc/log.h"
+#include "mods/svc/websocket.h"
+#include "mods/svc/net.h"
 
 #include "item.hpp"
 #include "session.hpp"
+#include "ap/ap_mode.hpp"
 
 DEFINE_MOD();
 IMPORT_SERVICE(HostService, svc_host);
@@ -19,6 +22,7 @@ IMPORT_SERVICE(MessageService, svc_message);
 IMPORT_SERVICE(GameModeService, svc_game_mode);
 IMPORT_SERVICE(TextureService, svc_texture);
 IMPORT_SERVICE(FileService, svc_file);
+IMPORT_SERVICE(NetService, svc_net);
 
 extern "C" {
 
@@ -49,6 +53,7 @@ MOD_EXPORT ModResult mod_initialize(ModError* error) {
 }
 
 MOD_EXPORT ModResult mod_update(ModError*) {
+    ap::update();
     // we register update function with game mode service, so no need to do anything here
     return MOD_OK;
 }
