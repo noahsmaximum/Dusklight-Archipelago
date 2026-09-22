@@ -2,6 +2,9 @@
 // usage: ap_gen_test <slot_data.json> <work dir>
 #include "../generator/randomizer.hpp"
 #include "../generator/logic/world.hpp"
+#include "../src/ap/data_version.hpp"
+
+#include <string_view>
 
 #include <nlohmann/json.hpp>
 #include <yaml-cpp/yaml.h>
@@ -11,8 +14,15 @@
 #include <iostream>
 
 int main(int argc, char** argv) {
+    // Lets tools/check_data_version.py compare the mod's fingerprint of the logic data
+    // with the apworld's, so the two implementations cannot drift apart unnoticed.
+    if (argc == 2 && std::string_view{argv[1]} == "--data-version") {
+        std::cout << "data_version " << ap::data_version() << "\n";
+        return 0;
+    }
     if (argc < 3) {
-        std::cerr << "usage: ap_gen_test <slot_data.json> <work dir>\n";
+        std::cerr << "usage: ap_gen_test <slot_data.json> <work dir>\n"
+                     "       ap_gen_test --data-version\n";
         return 2;
     }
     namespace fs = std::filesystem;

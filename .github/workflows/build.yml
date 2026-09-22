@@ -85,6 +85,12 @@ jobs:
       - name: Build
         run: cmake --build build --parallel
 
+      # The mod refuses a seed whose data_version differs from its own, so if its file list
+      # and data.py's ever disagree it would refuse every seed. One host platform is enough.
+      - name: Check data version parity
+        if: matrix.platform == 'linux-x86_64'
+        run: python3 tools/check_data_version.py build/ap_gen_test
+
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:

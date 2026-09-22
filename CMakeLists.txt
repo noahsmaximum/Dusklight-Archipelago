@@ -122,6 +122,7 @@ set(RANDOMIZER_SOURCES
         src/ui/ui.cpp
         src/ui/tracker.cpp
         src/ap/ap_client.cpp
+        src/ap/data_version.cpp
         src/ap/tls.cpp
         src/ap/ws_tcp.cpp
         src/ap/ap_mode.cpp
@@ -240,7 +241,8 @@ target_compile_definitions(randomizer_generator_tests PRIVATE
         RANDOMIZER_ONLY)
 
 # Offline test: rebuild a seed from Archipelago slot_data exactly like the mod does.
-add_executable(ap_gen_test ${CMAKE_CURRENT_SOURCE_DIR}/tools/ap_gen_test.cpp ${RANDOMIZER_GENERATOR_SOURCES})
+add_executable(ap_gen_test ${CMAKE_CURRENT_SOURCE_DIR}/tools/ap_gen_test.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/ap/data_version.cpp ${RANDOMIZER_GENERATOR_SOURCES})
 target_link_libraries(ap_gen_test PRIVATE
         dusklight_mod_api yaml-cpp::yaml-cpp base64pp fmt::fmt randomizer_embeds nlohmann_json::nlohmann_json)
 target_compile_definitions(ap_gen_test PRIVATE

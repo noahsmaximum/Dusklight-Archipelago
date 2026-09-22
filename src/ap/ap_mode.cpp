@@ -1,6 +1,7 @@
 #include "ap_mode.hpp"
 
 #include "ap_client.hpp"
+#include "data_version.hpp"
 #include "text_safe.hpp"
 
 #include "../../generator/randomizer.hpp"
@@ -374,6 +375,17 @@ std::vector<std::string> locations_for_check(const char* check) {
 bool load_slot_data(const json& slotData, std::string& err) {
     if (slotData.value("version", 0) != kSlotDataVersion) {
         err = "This slot was generated with an incompatible apworld version.";
+        return false;
+    }
+    // The apworld fingerprints the logic data it generated from. A different fingerprint here
+    // means the mod would rebuild this seed with different logic: items could end up behind
+    // requirements Archipelago never thought they were behind. Refuse it loudly instead.
+    const json theirs = slotData.value("data_version", json());
+    if (theirs.is_number_integer() && theirs.get<uint32_t>() != data_version()) {
+        err = "This multiworld was generated with a different version of the Twilight Princess "
+              "(Dusklight) apworld than this mod. Update both to the same release.";
+        ap_log(fmt::format("data version mismatch: seed {} vs mod {}", theirs.get<uint32_t>(),
+            data_version()));
         return false;
     }
     g_locationIds.clear();

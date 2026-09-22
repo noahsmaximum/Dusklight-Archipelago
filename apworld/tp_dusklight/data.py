@@ -224,8 +224,9 @@ def areas() -> dict[str, AreaData]:
 def data_version() -> int:
     """Fingerprint of the vendored data, sent to the mod in slot_data.
 
-    The mod does not check it yet: an old mod paired with a newer apworld will build a seed
-    with its own older logic instead of refusing. Update both together.
+    The mod computes the same value over its own copy of the data (src/ap/data_version.cpp)
+    and refuses the seed if they differ, rather than rebuilding it with different logic.
+    tools/check_data_version.py checks the two implementations agree.
     """
     crc = 0
     for path in ("items.yaml", "locations.yaml", "macros.yaml", "settings_list.yaml", *WORLD_FILES):

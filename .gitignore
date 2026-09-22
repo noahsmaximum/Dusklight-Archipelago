@@ -7,3 +7,5 @@ dusklight/
 
 mod.json
 apworld/tp_dusklight/data/
+build-android/
+__pycache__/
