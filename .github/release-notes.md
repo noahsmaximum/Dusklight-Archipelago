@@ -11,13 +11,11 @@ Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, st
 
 Needs Dusklight 2.0.1 or newer.
 
-## What's new in 0.3.0
+## What's new in 0.4.0
 
-- **Randomizer fixes from upstream**, including a logic change: the two checks at the Faron Woods Owl Statue now also need a way to smash.
-- Fixed returning to spawn part-way through the sewers sequence, the Midna jump to Coro's house outside twilight, and deleting a seed that's actively in use on a file.
-- Removed the unintuitive lost-woods-ledge savewarp shortcut.
-- Renamed a location, a macro and a setting from the "Canon"/"Canonball" typo to the correct "Cannon"/"Cannonball" spelling.
-- Spoiler logs are now valid YAML.
+- **Death link.** Set `death_link: true` in your YAML to share deaths with everyone else who has it on. A bottled fairy still saves you, and a fairy save doesn't count as dying. A death that arrives mid-cutscene waits until it's over. There's also a Death link toggle in the **Archipelago** tab (F1) that overrides the YAML for a save.
+
+Death link is new here and hasn't been through a full multiworld yet — say something if it misbehaves.
 
 ## Updating
 
