@@ -22,5 +22,3 @@ Needs Dusklight 2.0.1 or newer.
 ## Updating
 
 Update the mod and the apworld **together** — the logic data and some location names changed, and the mod can't detect a mismatch. Finish any multiworld already in progress on the versions you started it with.
-
-Not yet tested in a live hosted room; a locally hosted `ws://` server is the path that's been played end to end. Report anything you hit.
