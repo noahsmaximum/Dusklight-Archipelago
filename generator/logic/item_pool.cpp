@@ -301,7 +301,7 @@ namespace randomizer::logic::item_pool
             itemPool.erase("Gerudo Desert Bulblin Camp Key");
         }
 
-        // Remove all but 1 sky book characters if we're starting with the sky canon open
+        // Remove all but 1 sky book characters if we're starting with the sky cannon open
         if (world->Setting("City Does Not Require Filled Skybook") == "On")
         {
             itemPool["Progressive Sky Book"] = 1;

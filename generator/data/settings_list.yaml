@@ -458,8 +458,8 @@
   Tracker Important: True
   Default Option: "Off"
   Options:
-    - "Off": "The canon to City in the Sky will spawn in Lake Hylia when the Sky Book has been completed."
-    - "On": "The canon to City in the Sky will be in Lake Hylia from the start."
+    - "Off": "The cannon to City in the Sky will spawn in Lake Hylia when the Sky Book has been completed."
+    - "On": "The cannon to City in the Sky will be in Lake Hylia from the start."
 
 - Name: Goron Mines Entrance
   Tracker Important: True

@@ -598,29 +598,49 @@ void onSeedDialogCancel(ModContext* ctx, UiDialogHandle dialog, void* user_data)
     session::svc_mng.ui->dialog_close(ctx, dialog);
 }
 
-void onSeedDelete(ModContext* ctx, void* user_data) {
-    std::string hash = static_cast<const char*>(user_data);
-    if (randomizer_GetContext().mHash == hash) {
+struct DialogSeed {
+    std::string hash;
+    bool isUsed;
+};
+
+void onSeedDelete(ModContext* ctx, DialogSeed const& user_data) {
+    if (randomizer_GetContext().mHash == user_data.hash) {
         randomizer_GetContext() = RandomizerContext{};
     }
-    std::filesystem::remove_all(paths::GetRandomizerSeedsPath() / hash);
+    std::filesystem::remove_all(paths::GetRandomizerSeedsPath() / user_data.hash);
     session::svc_mng.ui->dialog_close(ctx, g_seedDialog);
 }
 
-bool isSeedDeleteDisabled(ModContext* ctx, void* user_data) {
-    std::string_view seedHash = static_cast<const char*>(user_data);
-
-    // Seed hashes in this dialog have the file they're being used on appended to the end
-    if (seedHash.contains("(File")) {
-        return true;
-    }
-
-    return false;
+bool isSeedDeleteDisabled(DialogSeed const& seed) {
+    return seed.isUsed;
 }
 
-template<UiPressedFn on_pressed, UiPredicateFn is_disabled>
+std::vector<DialogSeed> g_dialogSeedHashes = {};
+
+typedef bool (*UiSeedDialogPredicateFunc)(DialogSeed const& seed);
+typedef void (*UiSeedDialogPressedFunc)(ModContext* ctx, DialogSeed const& seed);
+
+template<UiSeedDialogPredicateFunc predicate>
+bool dialogIsDisabledWrapper(ModContext*, void* user_data) {
+    if (predicate == nullptr) {
+        return false;
+    }
+
+    return predicate(*static_cast<DialogSeed*>(user_data));
+}
+
+template<UiSeedDialogPressedFunc func>
+void dialogPressedWrapper(ModContext* ctx, void* user_data) {
+    func(ctx, *static_cast<DialogSeed*>(user_data));
+}
+
+template<UiSeedDialogPressedFunc on_pressed, UiSeedDialogPredicateFunc is_disabled>
 ModResult buildSeedDialogPane(ModContext* ctx, UiElementHandle pane, void* user_data, ModError* out_error) {
-    g_seedHashes = get_compatible_seed_hashes();
+    auto hashes = get_compatible_seed_hashes();
+    g_dialogSeedHashes.clear();
+    for (auto& hash : hashes) {
+        g_dialogSeedHashes.push_back({std::move(hash), false});
+    }
 
     // Get hashes of seeds which are actively being used
     std::array<std::string, 3> fileHashes{"", "", ""};
@@ -633,22 +653,23 @@ ModResult buildSeedDialogPane(ModContext* ctx, UiElementHandle pane, void* user_
         }
     }
 
-    for (auto& seedHash : g_seedHashes) {
+    for (auto& entry : g_dialogSeedHashes) {
         // Append the file a seed is being used on to the hash in this dialog
-        auto adjustedHash = seedHash;
+        auto adjustedHash = entry.hash;
         for (size_t fileNum = 0; fileNum < 3; ++fileNum) {
             auto& fileHash = fileHashes[fileNum];
-            if (seedHash == fileHash) {
+            if (entry.hash == fileHash) {
                 adjustedHash += " (File " + std::to_string(fileNum + 1) + ')';
+                entry.isUsed = true;
             }
         }
 
         ModResult rt = add_button(pane,
             adjustedHash.c_str(),
             "",
-            on_pressed,
-            is_disabled,
-            (void*)seedHash.c_str());
+            dialogPressedWrapper<on_pressed>,
+            dialogIsDisabledWrapper<is_disabled>,
+            &entry);
         if (rt != MOD_OK) {
             return rt;
         }
@@ -689,11 +710,10 @@ void buildSeedStringPermalinkPastedDialog(ModContext* ctx, void* user_data) {
     session::svc_mng.ui->dialog_push(mod_ctx, &desc, nullptr);
 }
 
-void onSeedExportSpoiler(ModContext* ctx, void* user_data) {
-    std::string hash = static_cast<const char*>(user_data);
-    auto spoilerPath = paths::GetRandomizerSeedsPath() / hash / (std::string(hash) + " Spoiler Log.txt");
+void onSeedExportSpoiler(ModContext* ctx, DialogSeed const& seed) {
+    auto spoilerPath = paths::GetRandomizerSeedsPath() / seed.hash / (seed.hash + " Spoiler Log.txt");
 
-    mods::file::export_file(spoilerPath.generic_string(), hash + " Spoiler Log.txt", [&](mods::file::PickResult result) {
+    mods::file::export_file(spoilerPath.generic_string(), seed.hash + " Spoiler Log.txt", [&](mods::file::PickResult result) {
         UiToastDesc desc = UI_TOAST_DESC_INIT;
         desc.title_rml = "Randomizer";
         if (result.status == MOD_OK) {
@@ -702,7 +722,7 @@ void onSeedExportSpoiler(ModContext* ctx, void* user_data) {
         } else {
             desc.body_rml = "Failed to Export Spoiler Log. See mod log for details.";
             desc.duration_ms = 5000;
-            mods::log::error("Could not export spoiler log for seed {}. Reason: {}", hash, result.error);
+            mods::log::error("Could not export spoiler log for seed {}. Reason: {}", seed.hash, result.error);
         }
 
         session::svc_mng.ui->push_toast(session::svc_mng.mod_ctx, &desc);
@@ -711,9 +731,8 @@ void onSeedExportSpoiler(ModContext* ctx, void* user_data) {
     session::svc_mng.ui->dialog_close(ctx, g_seedDialog);
 }
 
-void onSeedExportAllData(ModContext* ctx, void* user_data) {
-    std::string hash = static_cast<const char*>(user_data);
-    auto seedPath = paths::GetRandomizerSeedsPath() / hash;
+void onSeedExportAllData(ModContext* ctx, DialogSeed const& seed) {
+    auto seedPath = paths::GetRandomizerSeedsPath() / seed.hash;
 
     mods::file::PickOptions options{};
     mods::file::pick_folder(options, [=](mods::file::PickResult result) {
@@ -721,7 +740,7 @@ void onSeedExportAllData(ModContext* ctx, void* user_data) {
             std::filesystem::path exportPath = result.locations.front();
 
             // Create the export folder. if it has any previous contents, delete those.
-            auto exportFolder = exportPath / hash;
+            auto exportFolder = exportPath / seed.hash;
             std::filesystem::create_directories(exportFolder);
             for (const auto& entry : std::filesystem::directory_iterator(seedPath)) {
                 if (entry.is_directory()) {
@@ -746,7 +765,7 @@ void onSeedExportAllData(ModContext* ctx, void* user_data) {
                     session::svc_mng.ui->push_toast(session::svc_mng.mod_ctx, &desc);
                     session::svc_mng.ui->dialog_close(ctx, g_seedDialog);
                     mods::log::error("Could not export file {} for seed {}. Reason: {}",
-                        entry.path().filename().generic_string(), hash, static_cast<int>(createChildResult));
+                        entry.path().filename().generic_string(), seed.hash, static_cast<int>(createChildResult));
                     return;
                 }
             }
