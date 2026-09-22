@@ -11,16 +11,16 @@ Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, st
 
 Needs Dusklight 2.0.1 or newer.
 
-## What's new in 0.2.0
+## What's new in 0.3.0
 
-- **Encrypted rooms work.** The mod now does TLS itself, so `archipelago.gg` rooms connect and send checks. Enter the address as Archipelago gives it to you (`archipelago.gg:12345`); the mod works out whether the room is encrypted.
-- **Certificates are checked**, so a room with a bad certificate is refused instead of silently trusted. Self-signed server? Use `ws://`.
-- **A hostile server can't crash the game** through item text or by flooding the connection.
-- **Randomizer fixes from upstream**, including a logic change: reaching Eldin Field from north Eldin now needs a way to smash.
-- Built against **Dusklight 2.0.1**, which fixes crashes in mods that replace dialogue.
+- **Randomizer fixes from upstream**, including a logic change: the two checks at the Faron Woods Owl Statue now also need a way to smash.
+- Fixed returning to spawn part-way through the sewers sequence, the Midna jump to Coro's house outside twilight, and deleting a seed that's actively in use on a file.
+- Removed the unintuitive lost-woods-ledge savewarp shortcut.
+- Renamed a location, a macro and a setting from the "Canon"/"Canonball" typo to the correct "Cannon"/"Cannonball" spelling.
+- Spoiler logs are now valid YAML.
 
 ## Updating
 
-Update the mod and the apworld **together** — the logic data changed and the mod can't detect a mismatch. Finish any multiworld already in progress on the versions you started it with.
+Update the mod and the apworld **together** — the logic data and some location names changed, and the mod can't detect a mismatch. Finish any multiworld already in progress on the versions you started it with.
 
 Not yet tested in a live hosted room; a locally hosted `ws://` server is the path that's been played end to end. Report anything you hit.
