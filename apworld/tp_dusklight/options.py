@@ -53,8 +53,52 @@ def _option_attr(label: str) -> str:
     return "option_" + option_key(label)
 
 
+# The randomizer's defaults are a gentle first seed. Archipelago's are "everything that can be
+# a check is one", so a template or YAML that leaves these out gets the full game; the
+# presets set every one of them explicitly.
+MAX_CHECK_DEFAULTS: dict[str, str] = {
+    "Golden Bugs": "On",
+    "Sky Characters": "On",
+    "Gifts From NPCs": "On",
+    "Shop Items": "On",
+    "Hidden Skills": "On",
+    "Hidden Rupees": "On",
+    "Freestanding Rupees": "On",
+    "Poe Souls": "All",
+    "Small Keys": "Own Dungeon",
+    "Big Keys": "Own Dungeon",
+    "Maps and Compasses": "Own Dungeon",
+}
+
+
+def _numeric_doc(info: data.SettingInfo) -> str:
+    """Numeric settings carry no text upstream, but each is the count for one choice of a
+    "... Requirements" setting (e.g. Hyrule Barrier Fused Shadows), so say that."""
+    for parent in data.settings().values():
+        prefix = parent.name.removesuffix(" Requirements")
+        if parent.name.endswith(" Requirements") and info.name.startswith(prefix + " "):
+            choice = info.name[len(prefix) + 1:]
+            if choice in parent.options:
+                return (f"How many {choice.lower()} are needed when {parent.name} is set to "
+                        f"{choice}.")
+    return f"{info.name}."
+
+
+def _doc(info: data.SettingInfo) -> str:
+    if info.numeric:
+        return _numeric_doc(info)
+    lines = [f"{info.name}."]
+    described = [(label, info.descriptions[label]) for label in info.options
+                 if label in info.descriptions]
+    if described:
+        lines.append("")
+        lines.extend(f"**{label}:** {text}" for label, text in described)
+    return "\n".join(lines)
+
+
 def _make_option(info: data.SettingInfo) -> type:
-    doc = f"{info.name} (randomizer setting)."
+    doc = _doc(info)
+    default = MAX_CHECK_DEFAULTS.get(info.name, info.default)
     if info.numeric:
         values = [int(o) for o in info.options]
         return type(option_key(info.name).title().replace("_", ""), (Range,), {
@@ -62,10 +106,10 @@ def _make_option(info: data.SettingInfo) -> type:
             "display_name": info.name,
             "range_start": min(values),
             "range_end": max(values),
-            "default": int(info.default),
+            "default": int(default),
         })
     if info.options == ["Off", "On"]:
-        base = DefaultOnToggle if info.default == "On" else Toggle
+        base = DefaultOnToggle if default == "On" else Toggle
         return type(option_key(info.name).title().replace("_", ""), (base,), {
             "__doc__": doc,
             "display_name": info.name,
@@ -73,8 +117,20 @@ def _make_option(info: data.SettingInfo) -> type:
     attrs: dict[str, Any] = {"__doc__": doc, "display_name": info.name}
     for i, label in enumerate(info.options):
         attrs[_option_attr(label)] = i
-    attrs["default"] = info.options.index(info.default)
+    attrs["default"] = info.options.index(default)
     return type(option_key(info.name).title().replace("_", ""), (Choice,), attrs)
+
+
+class ShuffledDungeons(Range):
+    """How many of the nine dungeons have their contents shuffled into the multiworld.
+
+    The others, picked at random for each seed, keep their vanilla chests, keys, maps and
+    big items. You still play them, and logic still expects their items, but they aren't
+    checks. Lower this for a shorter game: each dungeon is roughly 8 to 22 checks."""
+    display_name = "Shuffled Dungeons"
+    range_start = 0
+    range_end = len(data.DUNGEONS)
+    default = len(data.DUNGEONS)
 
 
 EXPOSED: dict[str, str] = {}  # option attribute -> setting name
@@ -87,6 +143,8 @@ for _info in data.settings().values():
     _fields.append((_key, _make_option(_info)))
 
 
+# Archipelago-only: decided here, sent to the mod as explicit placements (see fill_slot_data).
+_fields.append(("shuffled_dungeons", ShuffledDungeons))
 _fields.append(("start_inventory_from_pool", StartInventoryPool))
 # Archipelago's own option, not a randomizer setting: the mod joins the DeathLink channel.
 _fields.append(("death_link", DeathLink))

@@ -19,8 +19,8 @@ from worlds.LauncherComponents import Component, Type, components
 from . import data, logic
 from .logic import FORM_NAMES, FORM_TIMES, HUMAN_DAY, HUMAN_NIGHT, TWILIGHT, WOLF_DAY, WOLF_NIGHT
 from .options import TPOptions, resolve_settings
-from .pools import (JUNK_POOL, build_item_pool, is_vanilla_location, removed_by_nonprogress,
-                    should_remove_location, starting_items)
+from .pools import (JUNK_POOL, build_item_pool, in_dungeon, is_vanilla_location,
+                    removed_by_nonprogress, should_remove_location, starting_items, vanilla_item)
 
 GAME = "Twilight Princess (Dusklight)"
 AP_ITEM_NAME = "Archipelago Item"
@@ -102,6 +102,10 @@ class TPWorld(World):
             s["Skip Prologue"] = "On"
         self.settings_map = s
         self._event_names: dict[str, str] = {}
+        # Shuffled Dungeons: the rest keep their vanilla contents. Picked from this world's own
+        # seeded random, so a given seed always leaves the same dungeons unshuffled.
+        unshuffled = len(data.DUNGEONS) - int(self.options.shuffled_dungeons.value)
+        self._vanilla_dungeons = frozenset(self.random.sample(list(data.DUNGEONS), unshuffled))
 
     def setting(self, name: str) -> str:
         return self.settings_map[name]
@@ -293,6 +297,9 @@ class TPWorld(World):
 
         # Item locations: real AP locations, or vanilla-locked ones as events carrying the real item
         self._vanilla_locked: dict[str, str] = {}
+        # The subset locked only because their dungeon isn't shuffled. The in-game generator
+        # can't know about that, so these go to it as explicit placements in slot_data.
+        self._dungeon_locked: dict[str, str] = {}
         self._excluded_nonprogress: set[str] = set()
         self._real_location_names: list[str] = []
         pending_locked: list[tuple[TPLocation, str]] = []
@@ -308,6 +315,10 @@ class TPWorld(World):
             if vanilla and removed_by_nonprogress(self, ld):
                 vanilla = None
                 self._excluded_nonprogress.add(loc_name)
+            if (vanilla is None and loc_name not in self._excluded_nonprogress
+                    and loc_name in _REAL_LOCATIONS and in_dungeon(ld, self._vanilla_dungeons)):
+                vanilla = vanilla_item(ld)
+                self._dungeon_locked[loc_name] = vanilla
             if vanilla is not None:
                 loc = TPLocation(p, loc_name, None, region, ld)
                 pending_locked.append((loc, vanilla))
@@ -328,6 +339,27 @@ class TPWorld(World):
         for name, count in self._starting.items():
             for i in range(count):
                 loc = TPLocation(p, f"Start: {name} #{i + 1}", None, menu)
+                loc.show_in_spoiler = False
+                menu.locations.append(loc)
+                pending_locked.append((loc, name))
+
+        # Unshuffled dungeons, in logic only: their keys count as already held. The randomizer's
+        # key logic is conservative (most Forest Temple doors want all four keys), which is
+        # right when keys can be placed anywhere, but an unshuffled dungeon also keeps its other
+        # items at home: the Gale Boomerang sits behind an all-keys door while some keys need
+        # the boomerang, and the sweep deadlocks. The dungeon itself is entirely vanilla, so
+        # its designed order guarantees each key turns up before its door; the keys are still
+        # physically in their vanilla chests in game.
+        held: Counter[str] = Counter()
+        for loc_name, item_name in self._vanilla_locked.items():
+            it = _ITEMS.get(item_name)
+            key_like = it is not None and (it.small_key_of or it.big_key_of)
+            if (key_like or item_name in ("Ordon Pumpkin", "Ordon Cheese")) and in_dungeon(
+                    _LOCATIONS[loc_name], self._vanilla_dungeons):
+                held[item_name] += 1
+        for name, count in held.items():
+            for i in range(count):
+                loc = TPLocation(p, f"Unshuffled: {name} #{i + 1}", None, menu)
                 loc.show_in_spoiler = False
                 menu.locations.append(loc)
                 pending_locked.append((loc, name))
@@ -373,6 +405,15 @@ class TPWorld(World):
         for item_name in self._vanilla_locked.values():
             if pool.get(item_name, 0) > 0:
                 pool[item_name] -= 1
+        # An unshuffled dungeon already has every one of its keys, maps and compasses locked
+        # where they started (all of them start inside their own dungeon). Anything of its left
+        # in the pool is a spare, e.g. Plentiful's extra key, and "own dungeon" placement would
+        # have nowhere to put it, so it goes.
+        for item_name in list(pool):
+            it = _ITEMS.get(item_name)
+            if it is not None and it.dungeon in self._vanilla_dungeons and (
+                    it.small_key_of or it.big_key_of or it.map_of or it.compass_of):
+                del pool[item_name]
         for name, count in self._starting.items():
             pool[name] = max(0, pool.get(name, 0) - count)
 
@@ -425,6 +466,20 @@ class TPWorld(World):
             if item.player == self.player:
                 state.collect(item, True)
         state.sweep_for_advancements(locations=self.get_locations())
+        # "Unreachable even with every item" must mean exactly that. A locked location carrying
+        # a real item that the sweep can't reach, but that becomes reachable once every locked
+        # item is simply handed over, is a logic deadlock, not a dead event: pruning it would
+        # quietly delete the item from the world. Fail loudly instead.
+        given = state.copy()
+        for loc in self.get_locations():
+            if loc.address is None and loc.item and loc.item.player == self.player:
+                given.collect(loc.item, True)
+        deadlocked = [l.name for l in self.get_locations()
+                      if l.name in self._vanilla_locked and not l.can_reach(state)
+                      and l.can_reach(given)]
+        if deadlocked:
+            raise RuntimeError(f"{self.player_name}: locked items the logic can't reach in order "
+                               f"(a deadlock, e.g. in an unshuffled dungeon): {deadlocked[:10]}")
         for region in self.get_regions():
             dead = [l for l in region.locations if l.address is None and not l.can_reach(state)
                     and not (l.item and l.item.name == "Game Beatable")]
@@ -522,6 +577,9 @@ class TPWorld(World):
                     "player": self.multiworld.player_name[item.player],
                     "flags": int(item.classification),
                 }
+        # Unshuffled dungeons: the in-game generator only knows the randomizer's own settings,
+        # so without these their chests would come up empty.
+        placements.update(self._dungeon_locked)
         return {
             "version": SLOT_DATA_VERSION,
             "data_version": data.data_version(),
@@ -535,3 +593,6 @@ class TPWorld(World):
 
     def write_spoiler_header(self, spoiler_handle) -> None:
         spoiler_handle.write(f"Vanilla-locked checks ({self.player_name}): {len(self._vanilla_locked)}\n")
+        if self._vanilla_dungeons:
+            spoiler_handle.write(f"Unshuffled dungeons ({self.player_name}): "
+                                 f"{', '.join(sorted(self._vanilla_dungeons))}\n")

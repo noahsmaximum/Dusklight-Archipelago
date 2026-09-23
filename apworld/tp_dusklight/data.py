@@ -114,6 +114,8 @@ class SettingInfo:
     options: list[str]
     need_in_game: bool
     numeric: bool
+    # Option label -> the randomizer's own one-line explanation, where it has one.
+    descriptions: dict[str, str] = field(default_factory=dict)
 
     def index_of(self, option: str) -> int:
         return self.options.index(option)
@@ -181,9 +183,14 @@ def settings() -> dict[str, SettingInfo]:
     out: dict[str, SettingInfo] = {}
     for node in _load("settings_list.yaml"):
         options: list[str] = []
+        descriptions: dict[str, str] = {}
         numeric = False
         for opt in node["Options"]:
             label = str(next(iter(opt))) if isinstance(opt, dict) else str(opt)
+            if isinstance(opt, dict):
+                text = str(next(iter(opt.values())) or "").strip()
+                if text and text != "No description available.":
+                    descriptions[label] = text
             lo, sep, hi = label.partition("-")
             if sep and lo.isdigit() and hi.isdigit():
                 numeric = True
@@ -196,6 +203,7 @@ def settings() -> dict[str, SettingInfo]:
             options=options,
             need_in_game=bool(node.get("Need In Game", False)),
             numeric=numeric,
+            descriptions=descriptions,
         )
     return out
 

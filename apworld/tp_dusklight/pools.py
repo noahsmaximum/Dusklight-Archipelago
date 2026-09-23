@@ -196,11 +196,21 @@ def is_vanilla_location(world: "TPWorld", loc: data.LocationData) -> str | None:
     )
     if not vanilla:
         return None
+    return vanilla_item(loc)
+
+
+def vanilla_item(loc: data.LocationData) -> str:
+    """The item the randomizer puts back at a location it leaves unshuffled."""
+    orig = data.items()[loc.original_item]
     if orig.is_bottle:
         return "Empty Bottle"
     if orig.is_stamp:
         return "Purple Rupee"
-    return oname
+    return orig.name
+
+
+def in_dungeon(loc: data.LocationData, dungeons) -> bool:
+    return loc.has("Dungeon") and any(loc.has(d) for d in dungeons)
 
 
 def removed_by_nonprogress(world: "TPWorld", loc: data.LocationData) -> bool:
