@@ -1,8 +1,9 @@
 # Twilight Princess (Dusklight) — Easy preset
 #
 # A short, forgiving multiworld: the prologue and Midna's Desperate Hour are done for you, the
-# three twilights are cleared, dungeon items stay in their own dungeons, and only chests and
-# freestanding items are shuffled. Around 320 checks.
+# three twilights are cleared, and only chests and freestanding items in the overworld and one
+# dungeon are checks. The other dungeons keep their vanilla contents: you still play them, but
+# they aren't checks. Around 150 checks.
 name: Player{number}
 description: Twilight Princess (Dusklight) - Easy
 game: Twilight Princess (Dusklight)
@@ -36,7 +37,8 @@ Twilight Princess (Dusklight):
   maps_and_compasses: start_with
   dungeon_rewards_can_be_anywhere: false
 
-  # Only the obvious checks are shuffled
+  # Only the overworld and one dungeon are checks
+  shuffled_dungeons: 1
   golden_bugs: false
   sky_characters: false
   gifts_from_npcs: false

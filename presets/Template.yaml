@@ -1,0 +1,725 @@
+# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Twilight Princess (Dusklight) Template
+
+game: Twilight Princess (Dusklight)
+requires:
+  version: 0.6.2 # Version of Archipelago required for this yaml to work as expected.
+  game:
+    Twilight Princess (Dusklight): 1.4.0 # Version of the world required for this yaml to work as expected.
+
+Twilight Princess (Dusklight):
+  ################
+  # Game Options #
+  ################
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-0-99: 0 # random value between 0 and 99
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  hyrule_barrier_requirements:
+    # Hyrule Barrier Requirements.
+    # 
+    # **Open:** The barrier around Hyrule Castle is dispelled from the beginning.
+    # **Vanilla:** The barrier will be dispelled once Palace of Twilight is cleared.
+    # **Fused Shadows:** The barrier will be dispelled once the required number of Fused Shadows have been collected.
+    # **Mirror Shards:** The barrier will be dispelled once the required number of Mirror Shards have been collected.
+    # **Dungeons:** The barrier will be dispelled once the required number of Dungeons have been cleared.
+    # **Poe Souls:** The barrier will be dispelled once the required number of Poe Souls have been collected.
+    # **Hearts:** The barrier will be dispelled once the required number of Hearts have been reached.
+    open: 0
+    vanilla: 50
+    fused_shadows: 0
+    mirror_shards: 0
+    dungeons: 0
+    poe_souls: 0
+    hearts: 0
+
+  hyrule_barrier_fused_shadows:
+    # How many fused shadows are needed when Hyrule Barrier Requirements is set to Fused Shadows.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 3
+    3: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-1-3: 0 # random value between 1 and 3
+
+  hyrule_barrier_mirror_shards:
+    # How many mirror shards are needed when Hyrule Barrier Requirements is set to Mirror Shards.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 4
+    4: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-1-4: 0 # random value between 1 and 4
+
+  hyrule_barrier_dungeons:
+    # How many dungeons are needed when Hyrule Barrier Requirements is set to Dungeons.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 8
+    5: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-1-8: 0 # random value between 1 and 8
+
+  hyrule_barrier_poe_souls:
+    # How many poe souls are needed when Hyrule Barrier Requirements is set to Poe Souls.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 60
+    20: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-1-60: 0 # random value between 1 and 60
+
+  hyrule_barrier_hearts:
+    # How many hearts are needed when Hyrule Barrier Requirements is set to Hearts.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 4
+    # Maximum value is 20
+    10: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-4-20: 0 # random value between 4 and 20
+
+  palace_of_twilight_requirements:
+    # Palace of Twilight Requirements.
+    # 
+    # **Open:** The Mirror of Twilight is open at the start of the game.
+    # **Fused Shadows:** The player must collect all 3 Fused Shadows.
+    # **Mirror Shards:** The player must collect all 4 Mirror Shards.
+    # **Vanilla:** The player must complete City in the Sky.
+    open: 0
+    fused_shadows: 0
+    mirror_shards: 0
+    vanilla: 50
+
+  faron_woods_logic:
+    # Faron Woods Logic.
+    # 
+    # **Closed:** Midna will block the player from leaving Faron Woods until Forest Temple is completed.
+    # **Open:** Midna will not prevent the player from leaving Faron Woods.
+    closed: 50
+    open: 0
+
+  mirror_chamber_access:
+    # Mirror Chamber Access.
+    # 
+    # **Open:** The entrance is open and operates like normal. If you start with the Mirror Chamber Portal, you can access the Stallord boss fight without going through Arbiter's Grounds.
+    # **Barrier:** A barrier is placed in front of the Mirror Chamber entrance and goes away once Stallord is defeated.
+    # **Closed:** The Mirror Chamber is isolated from the world and cannot be reached from the Stallord boss room. To access it, players will either need the portal or access from Palace of Twilight.
+    open: 50
+    barrier: 0
+    closed: 0
+
+  golden_bugs:
+    # Golden Bugs.
+    # 
+    # **Off:** The Golden Bug locations across Hyrule will not be randomized. You may still be expected to collect golden bugs if Agitha has important items.
+    # **On:** The Golden Bug locations across Hyrule will be randomized.
+    'false': 0
+    'true': 50
+
+  sky_characters:
+    # Sky Characters.
+    # 
+    # **Off:** The Sky Character locations across Hyrule will not be randomized. You may still be expected to collect Sky Characters.
+    # **On:** The Sky Character locations across Hyrule will be randomized.
+    'false': 0
+    'true': 50
+
+  gifts_from_npcs:
+    # Gifts From NPCs.
+    # 
+    # **Off:** Locations which involve an NPC giving you a gift will not be randomized. You may still be expected to talk to NPCs that give you important items.
+    # **On:** Locations which involve an NPC giving you a gift will be randomized.
+    'false': 0
+    'true': 50
+
+  shop_items:
+    # Shop Items.
+    # 
+    # **Off:** Shop items will not be randomized. You may still be expected to purchase shop items that are important.
+    # **On:** Shop items will be randomized.
+    'false': 0
+    'true': 50
+
+  hidden_skills:
+    # Hidden Skills.
+    # 
+    # **Off:** The golden wolf locations across Hyrule will give you Hidden Skills. You will be required to get at least one of them to obtain the Ending Blow.
+    # **On:** The golden wolf locations across Hyrule will be randomized.
+    'false': 0
+    'true': 50
+
+  hidden_rupees:
+    # Hidden Rupees.
+    # 
+    # **Off:** Rupees hidden in tricky locations will not be randomized.
+    # **On:** Rupees hidden in tricky locations will be randomized.
+    'false': 0
+    'true': 50
+
+  freestanding_rupees:
+    # Freestanding Rupees.
+    # 
+    # **Off:** Rupees out in the open will not be randomized.
+    # **On:** Rupees out in the open will be randomized.
+    'false': 0
+    'true': 50
+
+  poe_souls:
+    # Poe Souls.
+    # 
+    # **Vanilla:** All poes will give poe souls as the item for beating them.
+    # **Overworld:** Overworld poes will give randomized items. Poes in dungeons will still give poe souls.
+    # **Dungeon:** Poes in dungeons will give randomized items. Overworld poes will will give poe souls.
+    # **All:** All poes will be randomized.
+    vanilla: 0
+    overworld: 0
+    dungeon: 0
+    all: 50
+
+  ilia_memory_quest:
+    # Ilia Memory Quest.
+    # 
+    # **Vanilla:** The Ilia Memory Quest will work the same way as the base game. You'll start it by beating Temple of Time and then talking to Renado in Kakariko Village.
+    # **Letter:** Renado's Letter will be shuffled into the world somewhere. You'll start the quest by finding Renado's Letter and then showing it to Telma in her bar.
+    # **Invoice:** The Invoice will be shuffled into the world somewhere. You'll start the quest by finding the Invoice and showing it to the Doctor in Castle Town.
+    # **Statue:** The Wooden Statue will be shuffled into the world somewhere. You'll start the quest by finding the Wooden Statue and then showing it to Ilia in Kakariko Village.
+    # **Charm:** Ilia's Charm will be shuffled into the world somewhere. You'll start the quest by finding Ilia's Charm and then showing it to Ilia in Kakariko Village to complete the quest.
+    vanilla: 50
+    letter: 0
+    invoice: 0
+    statue: 0
+    charm: 0
+
+  item_scarcity:
+    # Item Scarcity.
+    # 
+    # **Vanilla:** No changes to the item pool.
+    # **Minimal:** Removes unrequired items such as Heart Containers and Pieces, Hawkeye, etc. Has as few items as possible for Bomb Bags, Bows, Hidden Skills, and Wallets. No Magic Armor and 1 Hidden Skill if Glitchless logic.
+    # **Plentiful:** One extra copy of major items. There are 17 Heart Containers but no Pieces of Heart. Extra keys if `Keysanity` or `Any Dungeon`.
+    vanilla: 50
+    minimal: 0
+    plentiful: 0
+
+  trap_item_frequency:
+    # Trap Item Frequency.
+    # 
+    # **None:** All items in the game will be genuine.
+    # **Few:** Approximately 12.5% of non-major items will be replaced with 'traps' that don't give the item they appear to be.
+    # **Many:** Approximately 39.1% of non-major items will be replaced with 'traps' that don't give the item they appear to be.
+    # **Mayhem:** Approximately 62.7% of non-major items will be replaced with 'traps' that don't give the item they appear to be.
+    # **Nightmare:** All of the non-major items will be replaced with 'traps' that don't give the item they appear to be.
+    none: 50
+    few: 0
+    many: 0
+    mayhem: 0
+    nightmare: 0
+
+  small_keys:
+    # Small Keys.
+    # 
+    # **Vanilla:** Small Keys will appear in their vanilla locations.
+    # **Own Dungeon:** Small Keys will appear inside their respective dungeon.
+    # **Any Dungeon:** Small Keys can appear inside any dungeon.
+    # **Overworld:** Small Keys will only appear in the overworld.
+    # **Anywhere:** Small Keys can appear anywhere.
+    # **Keysy:** Small Keys will not appear anywhere in the world and their locks will start opened.
+    vanilla: 0
+    own_dungeon: 50
+    any_dungeon: 0
+    overworld: 0
+    anywhere: 0
+    keysy: 0
+
+  big_keys:
+    # Big Keys.
+    # 
+    # **Vanilla:** Big Keys will appear in their vanilla locations.
+    # **Own Dungeon:** Big Keys will appear inside their respective dungeon.
+    # **Any Dungeon:** Big Keys can appear inside any dungeon.
+    # **Overworld:** Big Keys will only appear in the overworld.
+    # **Anywhere:** Big Keys can appear anywhere.
+    # **Keysy:** Big Keys will not appear anywhere in the world and boss doors will start opened.
+    vanilla: 0
+    own_dungeon: 50
+    any_dungeon: 0
+    overworld: 0
+    anywhere: 0
+    keysy: 0
+
+  maps_and_compasses:
+    # Maps and Compasses.
+    # 
+    # **Vanilla:** Maps and Compasses will appear in their vanilla locations.
+    # **Own Dungeon:** Maps and Compasses can appear anywhere inside their respective dungeon.
+    # **Any Dungeon:** Maps and Compasses can appear inside any dungeon.
+    # **Overworld:** Maps and Compasses will only appear in the overworld.
+    # **Anywhere:** Maps and Compasses can appear anywhere.
+    # **Start With:** The player starts with all Maps and Compasses.
+    vanilla: 0
+    own_dungeon: 50
+    any_dungeon: 0
+    overworld: 0
+    anywhere: 0
+    start_with: 0
+
+  hyrule_castle_big_key_requirements:
+    # Hyrule Castle Big Key Requirements.
+    # 
+    # **None:** The gate is opened and the key is randomized according to the respective Big Key settings.
+    # **Fused Shadows:** The gate will open once the required number of Fused Shadows have been collected.
+    # **Mirror Shards:** The gate will open once the required number of Mirror Shards have been collected.
+    # **Dungeons:** The gate will open once the required number of Dungeons have been cleared.
+    # **Poe Souls:** The gate will open once the required number of Poe Souls have been collected.
+    # **Hearts:** The gate will open once the required number of Hearts have been reached.
+    none: 50
+    fused_shadows: 0
+    mirror_shards: 0
+    dungeons: 0
+    poe_souls: 0
+    hearts: 0
+
+  hyrule_castle_big_key_fused_shadows:
+    # How many fused shadows are needed when Hyrule Castle Big Key Requirements is set to Fused Shadows.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 3
+    3: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-1-3: 0 # random value between 1 and 3
+
+  hyrule_castle_big_key_mirror_shards:
+    # How many mirror shards are needed when Hyrule Castle Big Key Requirements is set to Mirror Shards.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 4
+    4: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-1-4: 0 # random value between 1 and 4
+
+  hyrule_castle_big_key_dungeons:
+    # How many dungeons are needed when Hyrule Castle Big Key Requirements is set to Dungeons.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 8
+    5: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-1-8: 0 # random value between 1 and 8
+
+  hyrule_castle_big_key_poe_souls:
+    # How many poe souls are needed when Hyrule Castle Big Key Requirements is set to Poe Souls.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 1
+    # Maximum value is 60
+    20: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-1-60: 0 # random value between 1 and 60
+
+  hyrule_castle_big_key_hearts:
+    # How many hearts are needed when Hyrule Castle Big Key Requirements is set to Hearts.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 4
+    # Maximum value is 20
+    10: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-4-20: 0 # random value between 4 and 20
+
+  dungeon_rewards_can_be_anywhere:
+    # Dungeon Rewards Can Be Anywhere.
+    # 
+    # **Off:** Dungeon reward items (Fused Shadows and Mirror Shards) will only appear at the end of dungeons.
+    # **On:** Dungeon reward items (Fused Shadows and Mirror Shards) can appear anywhere.
+    'false': 50
+    'true': 0
+
+  small_keys_on_bosses:
+    # Small Keys on Bosses.
+    # 
+    # **Off:** Small keys will not be placed on boss heart container or dungeon reward checks.
+    # **On:** Small keys can potentially be placed on boss heart container or dungeon reward checks. You may be expected to defeat a dungeon's boss before progressing further into the dungeon.
+    'false': 50
+    'true': 0
+
+  skip_prologue:
+    # Skip Prologue.
+    # 
+    # **Off:** You will be required to play through the prologue section of the game to begin the randomizer. This includes everything up to the second goat herding sequence.
+    # **On:** The prologue section of the game will be completed from the start.
+    'false': 50
+    'true': 0
+
+  faron_twilight_cleared:
+    # Faron Twilight Cleared.
+    # 
+    # **Off:** You will be required to complete the Castle Sewers and Faron Twilight section of the game.
+    # **On:** The Castle Sewers and Faron Twilight section of the game will be completed from the start.
+    'false': 50
+    'true': 0
+
+  eldin_twilight_cleared:
+    # Eldin Twilight Cleared.
+    # 
+    # **Off:** You will be required to complete the Eldin Twilight section of the game.
+    # **On:** The Eldin Twilight section of the game will be completed from the start.
+    'false': 50
+    'true': 0
+
+  lanayru_twilight_cleared:
+    # Lanayru Twilight Cleared.
+    # 
+    # **Off:** You will be required to complete the Lanayru Twilight section of the game.
+    # **On:** The Lanayru Twilight section of the game will be completed from the start.
+    'false': 50
+    'true': 0
+
+  skip_midnas_desperate_hour:
+    # Skip Midna's Desperate Hour.
+    # 
+    # **Off:** After completing Lakebed Temple, you will be required to complete the Midna's Desperate Hour section of the game. Note that some overworld poes require Midna's Desperate Hour to be completed before they spawn in. The Midna Charge Attack will also not be available in the light world until Midna's Desperate Hour is completed.
+    # **On:** The Midna's Desperate Hour section of the game will be completed from the start.
+    'false': 50
+    'true': 0
+
+  skip_minor_cutscenes:
+    # Skip Minor Cutscenes.
+    # 
+    # **Off:** Minor cutscenes such as area introduction cutscenes and Midna text explanations will not be skipped.
+    # **On:** Minor cutscenes such as area introduction cutscenes and Midna text explanations will not play.
+    'false': 50
+    'true': 0
+
+  skip_major_cutscenes:
+    # Skip Major Cutscenes.
+    # 
+    # **Off:** If you want to skip a skippable cutscene, you must press the start button twice while the cutscene is playing.
+    # **On:** The randomizer will automatically skip any skippable cutscene as fast as possible.
+    'false': 50
+    'true': 0
+
+  unlock_map_regions:
+    # Unlock Map Regions.
+    # 
+    # **Off:** The map will not start filled in at the beginning of the randomizer. You will have to travel to the different sections of the world to get them on the map.
+    # **On:** The map will start as filled in as possible. Certain sections such as Eldin and Lanayru will only be filled in if their Twilight section is cleared from the start.
+    'false': 50
+    'true': 0
+
+  open_door_of_time:
+    # Open Door of Time.
+    # 
+    # **Off:** You will be required to lead the big statue down the Temple of Time to open the big door at the bottom.
+    # **On:** The big statue will already be set in place at the bottom of the Temple of Time and the door will be opened from the start.
+    'false': 50
+    'true': 0
+
+  active_goron_mines_magnets:
+    # Active Goron Mines Magnets.
+    # 
+    # **Off:** The switches to activate magnets in Goron Mines will need to be activated manually.
+    # **On:** The switches to activate magnets in Goron Mines will be activated from the start except for the highest one in the main room.
+    'false': 50
+    'true': 0
+
+  lower_hyrule_castle_chandelier:
+    # Lower Hyrule Castle Chandelier.
+    # 
+    # **Off:** The chandeliers in Hyrule Castle will all need to be lowered manually.
+    # **On:** One of the chandeliers in the Hyrule Castle main hall will be lowered from the start. This skips requiring Gale Boomerang and either Lantern or Bow to complete Hyrule Castle.
+    'false': 50
+    'true': 0
+
+  skip_bridge_donation:
+    # Skip Bridge Donation.
+    # 
+    # **Off:** You will need to donate money at Kakariko Malo Mart to build the bridge between Eldin Field and Castle Town.
+    # **On:** The bridge between Eldin Field and Castle Town will be automatically built after Eldin and Lanayru Twilight are both completed.
+    'false': 50
+    'true': 0
+
+  starting_form:
+    # Starting Form.
+    # 
+    # **Human:** Start as Human Link
+    # **Wolf:** Start as Wolf Link
+    human: 50
+    wolf: 0
+
+  bonks_do_damage:
+    # Bonks Do Damage.
+    'false': 50
+    'true': 0
+
+  starting_time_of_day:
+    # Starting Time of Day.
+    # 
+    # **Morning:** Time of day will start at 9am.
+    # **Noon:** Time of day will start at noon.
+    # **Evening:** Time of day will start at 6pm.
+    # **Night:** Time of day will start at midnight.
+    morning: 0
+    noon: 50
+    evening: 0
+    night: 0
+
+  logic_transform_anywhere:
+    # Logic Transform Anywhere.
+    # 
+    # **Off:** You will not be expected to transform in places that you normally can't.
+    # **On:** You may be expected to transform in places that require turning on the Dusklight Transform Anywhere setting.
+    'false': 0
+    'true': 50
+
+  logic_increase_wallet_capacity:
+    # Logic Increase Wallet Capacity.
+    # 
+    # **Off:** Logic will assume you have the same wallet capacities as the base game.
+    # **On:** Logic will assume that you have the Bigger Wallets Dusklight setting turned on.
+    'false': 50
+    'true': 0
+
+  logic_damage_multiplier:
+    # Logic Damage Multiplier.
+    # 
+    # **Vanilla:** Logic will assume your Dusklight Damage Multiplier is x1.
+    # **Double:** Logic will assume your Dusklight Damage Multiplier is x2.
+    # **Triple:** Logic will assume your Dusklight Damage Multiplier is x3.
+    # **Quadruple:** Logic will assume your Dusklight Damage Multiplier is x4.
+    # **OHKO:** Logic will assume your Dusklight Instant Death setting is turned on.
+    vanilla: 50
+    double: 0
+    triple: 0
+    quadruple: 0
+    ohko: 0
+
+  lakebed_does_not_require_water_bombs:
+    # Lakebed Does Not Require Water Bombs.
+    # 
+    # **Off:** The entrance to Lakebed Temple will be blocked by a boulder and require using Water Bombs to blow up.
+    # **On:** The rock blocking access to the entrance of Lakebed Temple will be gone, meaning you can get in without Water Bombs.
+    'false': 50
+    'true': 0
+
+  arbiters_does_not_require_bulblin_camp:
+    # Arbiters Does Not Require Bulblin Camp.
+    # 
+    # **Off:** Bulblin Camp will have to be completed to access the entrance to Arbiter's Grounds. This will require finding the Gerudo Desert Bulblin Camp Key.
+    # **On:** Bulblin Camp will be cleared at the start of the randomizer.
+    'false': 50
+    'true': 0
+
+  snowpeak_does_not_require_reekfish_scent:
+    # Snowpeak Does Not Require Reekfish Scent.
+    # 
+    # **Off:** Getting the reekfish scent will be required for running through the blizzard on Snowpeak Mountain. Getting the reekfish scent requires the Coral Earring.
+    # **On:** The randomizer will start you with the reekfish scent, meaning you can go through the Snowpeak Mountain blizzard without needing the Coral Earring.
+    'false': 50
+    'true': 0
+
+  sacred_grove_does_not_require_skull_kid:
+    # Sacred Grove Does Not Require Skull Kid.
+    # 
+    # **Off:** Getting through the Lost Woods will require completing the Skull Kid chase sequence.
+    # **On:** The Skull Kid chase sequence in the Lost Woods will start already completed.
+    'false': 50
+    'true': 0
+
+  city_does_not_require_filled_skybook:
+    # City Does Not Require Filled Skybook.
+    # 
+    # **Off:** The cannon to City in the Sky will spawn in Lake Hylia when the Sky Book has been completed.
+    # **On:** The cannon to City in the Sky will be in Lake Hylia from the start.
+    'false': 50
+    'true': 0
+
+  goron_mines_entrance:
+    # Goron Mines Entrance.
+    # 
+    # **Closed:** Accessing Goron Mines will require climbing up to the Death Mountain Sumo Hall and wrestling with the Goron Elder.
+    # **No Wrestling:** Accessing Goron Mines will require climbing up to the Death Mountain Sumo Hall, but wrestling the Goron Elder will not be necessary.
+    # **Open:** The elevator shortcut to the Death Mountain Sumo Hall will be open, and can be used to access Goron Mines.
+    closed: 50
+    no_wrestling: 0
+    open: 0
+
+  temple_of_time_sword_requirement:
+    # Temple of Time Sword Requirement.
+    # 
+    # **None:** The door to the past will be open from the start.
+    # **Wooden Sword:** The door to the past will require striking at least the Wooden Sword into the Master Sword pedestal.
+    # **Ordon Sword:** The door to the past will require striking at least the Ordon Sword into the Master Sword pedestal.
+    # **Master Sword:** The door to the past will require striking at least the Master Sword into the Master Sword pedestal.
+    # **Light Sword:** The door to the past will require striking the Light Sword into the Master Sword pedestal.
+    none: 50
+    wooden_sword: 0
+    ordon_sword: 0
+    master_sword: 0
+    light_sword: 0
+
+  agitha_hints:
+    # Agitha Hints.
+    # 
+    # **Off:** The sign outside Agitha's Castle will not contain any hints.
+    # **On:** The sign outside Agitha's Castle will hint all major items that can be obtained from turning in golden bugs to Agitha.
+    'false': 0
+    'true': 50
+
+  back_slice_as_sword:
+    # Back Slice as Sword.
+    # 
+    # **Off:** Back Slicing without a sword will not be logically required to do damage.
+    # **On:** Back Slicing without a sword can be logically required to do damage.
+    'false': 50
+    'true': 0
+
+  ball_and_chain_webs:
+    # Ball and Chain Webs.
+    # 
+    # **Off:** Ball and Chain will not be required to break webs.
+    # **On:** Ball and Chain may be required to break webs.
+    'false': 50
+    'true': 0
+
+  shuffled_dungeons:
+    # How many of the nine dungeons have their contents shuffled into the multiworld.
+    # 
+    # The others, picked at random for each seed, keep their vanilla chests, keys, maps and
+    # big items. You still play them, and logic still expects their items, but they aren't
+    # checks. Lower this for a shorter game: each dungeon is roughly 8 to 22 checks.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 9
+    9: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-0-9: 0 # random value between 0 and 9
+
+  death_link:
+    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+    'false': 50
+    'true': 0
+
+  ###########################
+  # Item & Location Options #
+  ###########################
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with the specified amount of these items. Example: {Bomb: 1, Arrow: 3}
+    {}
+
+  start_inventory_from_pool:
+    # Start with the specified amount of these items and don't place them in the world. Example: {Bomb: 1, Arrow: 3}
+    # 
+    # The game decides what the replacement items will be.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []
+
+  plando_items:
+    # Generic items plando.
+    []

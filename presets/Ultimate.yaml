@@ -1,10 +1,10 @@
-# Twilight Princess (Dusklight) — Normal preset
+# Twilight Princess (Dusklight) — Ultimate preset
 #
-# The standard multiworld: the prologue is skipped but most twilights are not, keys move
-# between dungeons, and three dungeons are shuffled while the rest keep their vanilla
-# contents. Around 200 checks.
+# The whole game at Normal's difficulty: every dungeon shuffled, and every golden bug, sky
+# character, gift, shop item, hidden skill, rupee and poe soul is a check. Long, but fair.
+# Around 570 checks.
 name: Player{number}
-description: Twilight Princess (Dusklight) - Normal
+description: Twilight Princess (Dusklight) - Ultimate
 game: Twilight Princess (Dusklight)
 
 Twilight Princess (Dusklight):
@@ -21,20 +21,20 @@ Twilight Princess (Dusklight):
   goron_mines_entrance: no_wrestling
   city_does_not_require_filled_skybook: false
 
-  shuffled_dungeons: 3
+  shuffled_dungeons: 9
   small_keys: any_dungeon
   big_keys: any_dungeon
   maps_and_compasses: start_with
   dungeon_rewards_can_be_anywhere: false
 
-  golden_bugs: false
-  sky_characters: false
-  gifts_from_npcs: false
-  shop_items: false
+  golden_bugs: true
+  sky_characters: true
+  gifts_from_npcs: true
+  shop_items: true
   hidden_skills: true
-  hidden_rupees: false
-  freestanding_rupees: false
-  poe_souls: vanilla
+  hidden_rupees: true
+  freestanding_rupees: true
+  poe_souls: all
 
   item_scarcity: vanilla
   trap_item_frequency: few

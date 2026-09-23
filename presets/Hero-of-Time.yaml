@@ -1,10 +1,10 @@
-# Twilight Princess (Dusklight) — Extreme preset
+# Twilight Princess (Dusklight) — Hero of Time preset
 #
-# Everything Hard does, plus a minimal item pool, one-hit kills, bonks that hurt, traps
-# everywhere, eight of the nine dungeons shuffled, and a castle that wants all eight dungeons
-# and every poe soul. Around 450 checks.
+# The hardest way to play: every possible check, a minimal item pool, one-hit kills, bonks
+# that hurt, every piece of junk replaced by a trap, and a castle that wants all eight dungeons
+# and every poe soul. Around 570 checks.
 name: Player{number}
-description: Twilight Princess (Dusklight) - Extreme
+description: Twilight Princess (Dusklight) - Hero of Time
 game: Twilight Princess (Dusklight)
 
 Twilight Princess (Dusklight):
@@ -17,7 +17,7 @@ Twilight Princess (Dusklight):
   skip_major_cutscenes: false
   unlock_map_regions: false
 
-  shuffled_dungeons: 8
+  shuffled_dungeons: 9
   small_keys: anywhere
   big_keys: anywhere
   maps_and_compasses: anywhere
@@ -29,12 +29,12 @@ Twilight Princess (Dusklight):
   gifts_from_npcs: true
   shop_items: true
   hidden_skills: true
-  hidden_rupees: false
-  freestanding_rupees: false
-  poe_souls: overworld
+  hidden_rupees: true
+  freestanding_rupees: true
+  poe_souls: all
 
   item_scarcity: minimal
-  trap_item_frequency: mayhem
+  trap_item_frequency: nightmare
   hyrule_barrier_requirements: dungeons
   hyrule_barrier_dungeons: 8
   hyrule_castle_big_key_requirements: poe_souls

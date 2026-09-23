@@ -19,8 +19,10 @@ You need three things:
 2. **The apworld.** Put `tp_dusklight.apworld` into your Archipelago install's `custom_worlds`
    folder. Whoever generates the multiworld needs it; players who only play need it for the
    tracker and text client.
-3. **A YAML.** Generate a template from the Archipelago Launcher, or copy
-   `Twilight Princess (Dusklight).yaml` from the release and edit it.
+3. **A YAML.** Start from a preset below, or copy `Template.yaml` from the release — the
+   full template with every option explained. You can also generate it
+   from the Archipelago Launcher; if you just installed or updated the apworld, restart the
+   Launcher first, because it keeps using the apworld it loaded when it started.
 
 Then:
 
@@ -42,7 +44,9 @@ given while away arrive when you load the save.
 ### Servers and encryption
 
 Both `ws://` and `wss://` work. The mod speaks WebSocket itself over a plain TCP socket, and
-wraps that in its own TLS for `wss://`, so nothing depends on the host's WebSocket support.
+wraps that in its own TLS for `wss://`, so nothing depends on the host's WebSocket support. It
+also takes the compressed messages Archipelago servers send (`permessage-deflate`), so they
+don't warn that the client doesn't support compression.
 
 Type the room address the way Archipelago gives it to you (`archipelago.gg:12345`). Rooms are
 served either encrypted or plain, never both, so the mod tries the likely one first — TLS for
@@ -67,21 +71,41 @@ whatever the YAML said.
 
 ## Presets
 
-`presets/` holds four ready-made YAMLs, verified to generate and to rebuild in-game:
+`presets/` holds seven ready-made YAMLs, each verified to generate and to rebuild exactly in
+the in-game generator. The first four step up in both length and difficulty; the last three
+are the whole game at rising difficulty. Check counts are averages: which dungeons stay
+unshuffled is random per seed, and dungeons differ in size.
 
-| Preset | Checks | What it is |
-| --- | --- | --- |
-| Easy | ~320 | Prologue, Midna's Desperate Hour and all three twilights done; dungeon items stay in their dungeon; only chests and freestanding items shuffled; plentiful pool, no traps, castle open. |
-| Medium | ~455 | Prologue skipped, twilights mostly intact, keys move between dungeons, golden bugs, NPC gifts and hidden skills shuffled, a few traps, castle wants four dungeons. |
-| Hard | ~570 | Nothing skipped, everything shuffled including shops, sky characters and every poe, keys anywhere, many traps, double damage, castle wants seven dungeons. |
-| Extreme | ~570 | Hard plus a minimal pool, one-hit kills, bonks that hurt, traps everywhere, and a castle that wants all eight dungeons and all 60 poe souls. |
+| Preset | Checks | Difficulty | What it is |
+| --- | --- | --- | --- |
+| Easy | ~150 | Easy | Prologue, Midna's Desperate Hour and all three twilights done; overworld chests and freestanding items plus one dungeon; plentiful pool, no traps, castle open. |
+| Normal | ~200 | Normal | Prologue skipped, twilights mostly intact, keys move between dungeons, hidden skills shuffled, three dungeons, a few traps, castle wants four dungeons. |
+| Hard | ~300 | Hard | Nothing skipped, keys anywhere, golden bugs, sky characters, hidden skills and shops shuffled, six dungeons, many traps, double damage. |
+| Extreme | ~450 | Extreme | Hard plus a minimal pool, one-hit kills, bonks that hurt, traps everywhere, eight dungeons, and a castle that wants all eight dungeons and all 60 poe souls. |
+| Ultimate | ~570 | Normal | Every possible check — all nine dungeons, every bug, sky character, gift, shop item, hidden skill, rupee and poe — at Normal's difficulty. |
+| Hero of Twilight | ~570 | Hard | Every possible check at Hard's difficulty. |
+| Hero of Time | ~570 | Hardest | Every possible check with Extreme's punishment, and every piece of junk replaced by a trap. |
 
-Copy one into your Archipelago `Players` folder and set `name:` to your slot name.
+Copy one into your Archipelago `Players` folder and set `name:` to your slot name. The
+release also carries `Template.yaml`, the full template with every option explained.
 
 ## Options
 
 The YAML options are generated from the randomizer's own settings, so they match the names in
-the in-game randomizer menus. A few are fixed by this world:
+the in-game randomizer menus, and each one is explained in the template with the randomizer's
+own description.
+
+Left unset, an option gives you the most checks it can: every optional shuffle is on, every
+poe soul is a check, and dungeon items stay in their own dungeon. That's the whole game, so
+for anything shorter start from a preset.
+
+**Shuffled Dungeons** (0–9) is this world's own: how many dungeons have their contents
+shuffled into the multiworld. The rest, picked at random for each seed, keep their vanilla
+chests, keys, maps and big items. You still play them and logic still expects their items, but
+they aren't checks, which is how the shorter presets get down to their size. The spoiler log
+lists which dungeons stayed vanilla.
+
+A few options are fixed by this world:
 
 - **Entrance randomization** and **randomized starting spawn** are off. The in-game generator
   only sees your own world, so it can't place entrances consistently with the multiworld yet.
