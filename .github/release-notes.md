@@ -11,12 +11,14 @@ Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, st
 
 Needs Dusklight 2.0.1 or newer.
 
-## What's new in 0.4.2
+## What's new in 0.5.0
 
-- **Fixed the apworld manifest.** Archipelago 0.6.7 logs "Invalid or missing manifest file" for the old one and warns it stops working in 0.7.0. The manifest now carries the fields Archipelago expects.
-
-Recent releases: death link in 0.4.0 (`death_link: true`, or the toggle in the **Archipelago** tab), and 0.4.1 refuses a seed whose apworld and mod disagree about the logic.
+- **Seven presets, sized by checks.** Easy ~150, Normal ~200, Hard ~300, Extreme ~450, and three full games — Ultimate (Normal difficulty), Hero of Twilight (Hard) and Hero of Time (hardest, every junk item a trap) — at ~570.
+- **New option: Shuffled Dungeons (0–9).** Only that many dungeons, picked at random, are checks; the rest keep their vanilla contents. You still play them, they just aren't checks. This is how the shorter presets get short.
+- **Leaving an option out now gives the most checks.** Every optional shuffle is on by default, so the default template is the whole game. Start from a preset for anything shorter.
+- **The template ships with every release** as `Template.yaml`, with every option explained in the randomizer's own words.
+- **WebSocket compression.** Archipelago servers no longer warn that your client doesn't support compressed connections.
 
 ## Updating
 
-Update the mod and the apworld **together** — the logic data and some location names changed, and the mod can't detect a mismatch. Finish any multiworld already in progress on the versions you started it with.
+Update the mod and the apworld **together**. The generating host needs the new apworld for the new presets and options; if the logic data ever differs between a player's mod and the seed, the mod refuses it and says to update. Finish any multiworld already in progress on the versions you started it with.
