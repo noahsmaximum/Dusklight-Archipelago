@@ -1,5 +1,5 @@
-// Host-side test for the mod's defenses against a hostile Archipelago server: the TLS
-// client (src/ap/tls.cpp) and the text sanitizer (src/ap/text_safe.hpp).
+// Host-side test for the mod's network client: the TLS layer (src/ap/tls.cpp), the text
+// sanitizer (src/ap/text_safe.hpp) and WebSocket decompression (src/ap/ws_deflate.cpp).
 //
 // TlsStream never touches a socket itself, so it can be driven over ordinary blocking
 // sockets here, against real servers, without launching the game. Run with no arguments
@@ -13,6 +13,7 @@
 
 #include "ap/text_safe.hpp"
 #include "ap/tls.hpp"
+#include "ap/ws_deflate.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -202,6 +203,69 @@ bool check_text_safety() {
     return ok;
 }
 
+#include "deflate_vectors.inc"
+
+// permessage-deflate, against vectors from the same websockets encoder Archipelago's server
+// uses. Message 2 is pure back-references into message 1, so it only decodes if the stream
+// keeps its window between messages the way the server's does.
+bool check_deflate() {
+    bool ok = true;
+    auto report = [&](const char* what, bool pass, const std::string& detail = {}) {
+        // The detail is the last error, which only means something when this case failed.
+        std::printf("%-32s %s%s%s\n", what, pass ? "PASS" : "FAIL",
+            pass || detail.empty() ? "" : "  ", pass ? "" : detail.c_str());
+        ok = ok && pass;
+    };
+
+    struct Negotiation {
+        const char* what;
+        const char* header;
+        bool valid;
+        bool accepted;
+        bool noContext;
+    };
+    const Negotiation negotiations[] = {
+        {"declined is fine", "", true, false, false},
+        {"archipelago's answer accepted", "permessage-deflate; server_max_window_bits=11", true, true, false},
+        {"no-context flag read", "permessage-deflate; server_no_context_takeover", true, true, true},
+        {"unoffered extension refused", "x-webkit-deflate-frame", false, false, false},
+        {"unknown parameter refused", "permessage-deflate; bogus=1", false, false, false},
+        {"duplicate extension refused", "permessage-deflate, permessage-deflate", false, false, false},
+    };
+    for (const auto& n : negotiations) {
+        ap::DeflateParams params;
+        std::string error;
+        const bool valid = ap::parse_deflate_response(n.header, params, error);
+        report(n.what, valid == n.valid && (!valid || (params.accepted == n.accepted &&
+                                                         params.serverNoContextTakeover == n.noContext)));
+    }
+
+    const std::string packet = kDeflatePacket;
+    auto bytes = [](const unsigned char* data, size_t size) {
+        return std::string(reinterpret_cast<const char*>(data), size);
+    };
+    std::string error;
+
+    ap::Inflater stream;
+    std::string m1 = bytes(kDeflateMsg1, sizeof(kDeflateMsg1));
+    report("first message inflates", stream.inflate_message(m1, 1 << 20, false, error) && m1 == packet, error);
+    std::string m2 = bytes(kDeflateMsg2, sizeof(kDeflateMsg2));
+    report("second uses the first's window", stream.inflate_message(m2, 1 << 20, false, error) && m2 == packet, error);
+
+    ap::Inflater fresh;
+    std::string alone = bytes(kDeflateMsg2, sizeof(kDeflateMsg2));
+    report("(and needs it: fails alone)", !(fresh.inflate_message(alone, 1 << 20, false, error) && alone == packet));
+
+    ap::Inflater tight;
+    std::string bomb = bytes(kDeflateBomb, sizeof(kDeflateBomb));
+    report("2 KB inflating to 2 MB refused", !tight.inflate_message(bomb, 1 << 20, false, error));
+    ap::Inflater roomy;
+    std::string fine = bytes(kDeflateBomb, sizeof(kDeflateBomb));
+    report("same data under a bigger cap", roomy.inflate_message(fine, 4 << 20, false, error) &&
+                                                fine.size() == 2u * 1024 * 1024, error);
+    return ok;
+}
+
 Case parse(const std::string& text) {
     Case item;
     std::string address = text;
@@ -245,6 +309,8 @@ int main(int argc, char** argv) {
     }
 
     int failures = check_text_safety() ? 0 : 1;
+    std::printf("\n");
+    failures += check_deflate() ? 0 : 1;
     std::printf("\n");
     for (const Case& item : cases) {
         if (!run(item)) {

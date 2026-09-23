@@ -9,6 +9,7 @@
 // for wss://, so the host service is not used at all.
 
 #include "tls.hpp"
+#include "ws_deflate.hpp"
 
 #include <cstdint>
 #include <string>
@@ -50,6 +51,9 @@ private:
     std::string mRx;
     std::string mFragment;
     int mFragmentOpcode = 0;
+    bool mFragmentCompressed = false;
+    DeflateParams mDeflate;  // what the server agreed to in the upgrade response
+    Inflater mInflater;      // lives as long as the connection: see ws_deflate.hpp
     std::vector<Event> mEvents;
     std::string mHost;
     std::string mPath;

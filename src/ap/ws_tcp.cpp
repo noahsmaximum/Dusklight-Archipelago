@@ -6,6 +6,7 @@
 #include <fmt/format.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <random>
 
@@ -86,6 +87,9 @@ bool TcpWebSocket::connect(
     mSecure = secure;
     mRx.clear();
     mFragment.clear();
+    mFragmentCompressed = false;
+    mDeflate = {};
+    mInflater.reset();
     mEvents.clear();
 
     auto socket = mods::net::connect(fmt::format("tcp://{}:{}", host, port));
@@ -144,6 +148,8 @@ bool TcpWebSocket::send_upgrade() {
     const std::string request = fmt::format(
         "GET {} HTTP/1.1\r\nHost: {}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
         "Sec-WebSocket-Key: {}\r\nSec-WebSocket-Version: 13\r\n"
+        // Archipelago servers compress what they send, and warn clients that can't take it.
+        "Sec-WebSocket-Extensions: permessage-deflate\r\n"
         "User-Agent: Dusklight-Archipelago\r\n\r\n",
         mPath, mHost, key);
     if (!out_send(request)) {
@@ -176,6 +182,29 @@ void TcpWebSocket::consume_handshake() {
         fail("server refused the WebSocket upgrade: " + head.substr(0, std::min(lineEnd, size_t{80})));
         return;
     }
+    // Collect every Sec-WebSocket-Extensions header: we offered permessage-deflate, and the
+    // server may have accepted it with parameters we need to honour when reading frames.
+    std::string extensions;
+    for (size_t pos = head.find("\r\n"); pos != std::string::npos;) {
+        const size_t next = head.find("\r\n", pos + 2);
+        const std::string line =
+            head.substr(pos + 2, next == std::string::npos ? std::string::npos : next - pos - 2);
+        const size_t colon = line.find(':');
+        if (colon != std::string::npos) {
+            std::string name = line.substr(0, colon);
+            std::transform(name.begin(), name.end(), name.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            if (name == "sec-websocket-extensions") {
+                extensions += (extensions.empty() ? "" : ",") + line.substr(colon + 1);
+            }
+        }
+        pos = next;
+    }
+    std::string error;
+    if (!parse_deflate_response(extensions, mDeflate, error)) {
+        fail(error);
+        return;
+    }
     mState = State::Open;
     mEvents.push_back({EventType::Open, {}, {}});
 }
@@ -184,7 +213,16 @@ bool TcpWebSocket::consume_frames() {
     while (mRx.size() >= 2) {
         const auto* bytes = reinterpret_cast<const uint8_t*>(mRx.data());
         const bool fin = (bytes[0] & 0x80) != 0;
+        const bool rsv1 = (bytes[0] & 0x40) != 0;
         const int opcode = bytes[0] & 0x0F;
+        // RSV1 marks a compressed message: legal only on its first frame, only for data, and
+        // only once permessage-deflate was agreed. RSV2 and RSV3 belong to no extension of ours.
+        if ((bytes[0] & 0x30) != 0 ||
+            (rsv1 && (!mDeflate.accepted || (opcode != 0x1 && opcode != 0x2))))
+        {
+            fail("the server set frame bits this connection didn't agree to");
+            return false;
+        }
         const bool masked = (bytes[1] & 0x80) != 0;
         uint64_t len = bytes[1] & 0x7F;
         size_t offset = 2;
@@ -233,15 +271,27 @@ bool TcpWebSocket::consume_frames() {
             }
             if (opcode != 0x0) {
                 mFragmentOpcode = opcode;
+                mFragmentCompressed = rsv1;
                 mFragment = std::move(payload);
             } else {
                 mFragment += payload;
             }
             if (fin) {
+                // Inflate even the messages we then drop: with context takeover the stream's
+                // window has to see every message, or the next one decodes into garbage.
+                std::string error;
+                if (mFragmentCompressed &&
+                    !mInflater.inflate_message(mFragment, kMaxMessageBytes,
+                        mDeflate.serverNoContextTakeover, error))
+                {
+                    fail(error);
+                    return false;
+                }
                 if (mFragmentOpcode == 0x1) {
                     mEvents.push_back({EventType::Message, std::move(mFragment), {}});
                 }
                 mFragment.clear();
+                mFragmentCompressed = false;
             }
             break;
         case 0x8:  // close

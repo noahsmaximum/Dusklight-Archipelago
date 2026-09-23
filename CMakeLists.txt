@@ -67,7 +67,24 @@ FetchContent_Declare(
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
-FetchContent_MakeAvailable(yaml-cpp base64pp battery-embed nlohmann_json mbedtls)
+# Raw inflate for WebSocket permessage-deflate (Archipelago servers compress what they send).
+# The amalgamated release is one .c file; it's built here with its zlib-compatible names off,
+# so nothing it defines can collide with a zlib the host already has.
+message(STATUS "randomizer: Fetching miniz")
+FetchContent_Declare(
+        miniz
+        URL https://github.com/richgel999/miniz/releases/download/3.1.2/miniz-3.1.2.zip
+        URL_HASH SHA256=f0446d863f9c19926ad9483c523fdc42e42b8d4a6a431d27e09d49c79a140d9a
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+
+FetchContent_MakeAvailable(yaml-cpp base64pp battery-embed nlohmann_json mbedtls miniz)
+
+enable_language(C)
+add_library(ap_miniz STATIC "${miniz_SOURCE_DIR}/miniz.c")
+target_include_directories(ap_miniz PUBLIC "${miniz_SOURCE_DIR}")
+target_compile_definitions(ap_miniz PUBLIC
+        MINIZ_NO_ZLIB_COMPATIBLE_NAMES MINIZ_NO_ARCHIVE_APIS MINIZ_NO_STDIO MINIZ_NO_TIME)
 
 set(RANDOMIZER_GENERATOR_SOURCES
         generator/logic/area.cpp
@@ -125,6 +142,7 @@ set(RANDOMIZER_SOURCES
         src/ap/data_version.cpp
         src/ap/tls.cpp
         src/ap/ws_tcp.cpp
+        src/ap/ws_deflate.cpp
         src/ap/ap_mode.cpp
 )
 
@@ -200,7 +218,7 @@ add_mod(archipelago
     BUNDLE
 )
 
-target_link_libraries(archipelago PRIVATE yaml-cpp::yaml-cpp base64pp randomizer_embeds nlohmann_json::nlohmann_json MbedTLS::mbedtls)
+target_link_libraries(archipelago PRIVATE yaml-cpp::yaml-cpp base64pp randomizer_embeds nlohmann_json::nlohmann_json MbedTLS::mbedtls ap_miniz)
 
 string(LENGTH "${CMAKE_CURRENT_SOURCE_DIR}/" RANDOMIZER_SOURCE_PATH_SIZE)
 target_compile_definitions(archipelago PRIVATE
@@ -253,9 +271,10 @@ target_compile_definitions(ap_gen_test PRIVATE
         RANDOMIZER_ONLY)
 
 # Offline test: drive the TLS client over ordinary sockets, against real servers.
-add_executable(tls_test ${CMAKE_CURRENT_SOURCE_DIR}/tools/tls_test.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/ap/tls.cpp)
-target_link_libraries(tls_test PRIVATE randomizer_embeds MbedTLS::mbedtls)
-target_include_directories(tls_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_executable(tls_test ${CMAKE_CURRENT_SOURCE_DIR}/tools/tls_test.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/ap/tls.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/ap/ws_deflate.cpp)
+target_link_libraries(tls_test PRIVATE randomizer_embeds MbedTLS::mbedtls ap_miniz)
+target_include_directories(tls_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/tools)
 if (WIN32)
     target_link_libraries(tls_test PRIVATE ws2_32)
 endif ()
