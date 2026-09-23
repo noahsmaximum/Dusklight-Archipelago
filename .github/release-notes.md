@@ -11,11 +11,11 @@ Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, st
 
 Needs Dusklight 2.0.1 or newer.
 
-## What's new in 0.4.0
+## What's new in 0.4.1
 
-- **Death link.** Set `death_link: true` in your YAML to share deaths with everyone else who has it on. A bottled fairy still saves you, and a fairy save doesn't count as dying. A death that arrives mid-cutscene waits until it's over. There's also a Death link toggle in the **Archipelago** tab (F1) that overrides the YAML for a save.
+- **Mismatched versions are now caught.** If your mod and the apworld the multiworld was generated with disagree about the logic, the mod refuses the seed and tells you to update, instead of quietly building it with different rules — which could leave items somewhere you can't reach.
 
-Death link is new here and hasn't been through a full multiworld yet — say something if it misbehaves.
+Death link arrived in 0.4.0: set `death_link: true` in your YAML, or use the toggle in the **Archipelago** tab (F1).
 
 ## Updating
 
