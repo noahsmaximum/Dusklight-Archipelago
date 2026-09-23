@@ -11,11 +11,11 @@ Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, st
 
 Needs Dusklight 2.0.1 or newer.
 
-## What's new in 0.4.1
+## What's new in 0.4.2
 
-- **Mismatched versions are now caught.** If your mod and the apworld the multiworld was generated with disagree about the logic, the mod refuses the seed and tells you to update, instead of quietly building it with different rules — which could leave items somewhere you can't reach.
+- **Fixed the apworld manifest.** Archipelago 0.6.7 logs "Invalid or missing manifest file" for the old one and warns it stops working in 0.7.0. The manifest now carries the fields Archipelago expects.
 
-Death link arrived in 0.4.0: set `death_link: true` in your YAML, or use the toggle in the **Archipelago** tab (F1).
+Recent releases: death link in 0.4.0 (`death_link: true`, or the toggle in the **Archipelago** tab), and 0.4.1 refuses a seed whose apworld and mod disagree about the logic.
 
 ## Updating
 
