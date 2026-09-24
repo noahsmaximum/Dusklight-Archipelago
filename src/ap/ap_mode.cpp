@@ -21,6 +21,8 @@
 #include "d/actor/d_a_obj_item.h"
 #include "d/d_com_inf_game.h"
 #include "d/d_file_select.h"
+#include "d/d_kankyo.h"
+#include "d/d_msg_flow.h"
 #include "d/d_stage.h"
 #include "m_Do/m_Do_audio.h"
 
@@ -82,6 +84,7 @@ struct SaveState {
     std::string seed;     // AP seed name this save belongs to
     std::string slot;
     int deathLink = -1;   // -1 follow the YAML, 0 off, 1 on (toggled from the Archipelago tab)
+    bool transformAnywhere = false;  // the slot's Logic Transform Anywhere, kept for offline play
 };
 
 enum class Phase {
@@ -147,6 +150,7 @@ UiElementHandle g_statusWindowText = 0;
 
 // Death link (see "Death link" below)
 bool g_deathLinkSlot = false;   // the YAML's choice, from slot_data
+bool g_transformAnywhereSlot = false;  // the slot's Logic Transform Anywhere, from slot_data
 bool g_deathSent = false;       // this death is handled; cleared once Link is alive again
 double g_lastDeathTime = 0.0;   // time on the death we sent, to recognise its echo
 int g_killFrames = 0;           // > 0: a death now is the one we were sent, not a new one
@@ -268,6 +272,7 @@ bool read_blob(const char* name, T& out) {
         out.seed = j.value("seed", "");
         out.slot = j.value("slot", "");
         out.deathLink = j.value("death_link", -1);
+        out.transformAnywhere = j.value("transform_anywhere", false);
     }
     return true;
 }
@@ -280,7 +285,8 @@ void write_conn() {
 
 void write_state() {
     const std::string s = json{{"received", g_state.received}, {"goal", g_state.goal},
-        {"seed", g_state.seed}, {"slot", g_state.slot}, {"death_link", g_state.deathLink}}
+        {"seed", g_state.seed}, {"slot", g_state.slot}, {"death_link", g_state.deathLink},
+        {"transform_anywhere", g_state.transformAnywhere}}
                               .dump();
     svc_mng.save->set_blob(svc_mng.mod_ctx, kStateBlob, s.data(), s.size());
 }
@@ -525,6 +531,12 @@ void on_connected(const json& p) {
     g_deathLinkSlot = deathLink.is_boolean() ? deathLink.get<bool>()
                                              : deathLink.is_number() && deathLink.get<int>() != 0;
     apply_death_link_tags();
+    const json settings = slotData.value("settings", json::object());
+    g_transformAnywhereSlot = settings.value("Logic Transform Anywhere", std::string{}) == "On";
+    if (g_phase == Phase::Playing && g_state.transformAnywhere != g_transformAnywhereSlot) {
+        g_state.transformAnywhere = g_transformAnywhereSlot;
+        write_state();
+    }
     g_checked.clear();
     for (const auto& id : p.value("checked_locations", json::array())) {
         g_checked.insert(id.get<int64_t>());
@@ -685,6 +697,10 @@ DEFINE_HOOK(&daAlink_c::procCoDeadInit, ApLinkDeadInit);
 DEFINE_HOOK(&daAlink_c::procCoFogDeadInit, ApLinkFogDeadInit);
 // Ganondorf's execute is file-local; hook it by translation unit alias.
 DEFINE_HOOK_SYMBOL("src/d/actor/d_a_b_gnd.cpp#daB_GND_Execute", int(b_gnd_class*), ApGanondorf);
+// Midna's "is an NPC watching?" search is file-local too (see Transform Anywhere below).
+DEFINE_HOOK_SYMBOL("src/d/actor/d_a_midna.cpp#daMidna_searchNpc", void*(fopAc_ac_c*, void*),
+    ApMidnaSearchNpc);
+DEFINE_HOOK(&dMsgFlow_c::query042, ApMsgQuery042);
 
 float model_scale() {
     double s = 0.6;
@@ -761,6 +777,34 @@ HookAction pre_change_scene(ModContext*, void*, void*, void*) {
 bool in_gameplay() {
     return g_phase == Phase::Playing && !g_needsRegen && randomizer_IsActive() &&
            !playerIsOnTitleScreen() && dComIfGp_getPlayer(0) != nullptr;
+}
+
+// ---------------------------------------------------------------------------------------
+// Transform Anywhere
+//
+// With the slot's Logic Transform Anywhere on, logic may expect Link to transform where an NPC
+// can see him, which the game refuses unless Dusklight's Can Transform Anywhere cheat is on.
+// Mods can't reach host settings, so do what that setting does, for this save only: the host
+// checks it at both calls of daMidna_searchNpc, and in one Castle Town branch of query042 (the
+// flow query behind talking to Midna about transforming).
+
+bool transform_anywhere_on() {
+    return g_phase == Phase::Playing && g_state.transformAnywhere && randomizer_IsActive();
+}
+
+void post_midna_search_npc(ModContext*, void*, void* retval, void*) {
+    if (transform_anywhere_on()) {
+        *static_cast<void**>(retval) = nullptr;  // nobody is watching
+    }
+}
+
+void post_msg_query042(ModContext*, void*, void* retval, void*) {
+    // 4 is the Castle Town branch the host skips under Can Transform Anywhere. Past it the query
+    // checks for nearby NPCs (never flagged now) and then for twilight (3).
+    auto* ret = static_cast<u16*>(retval);
+    if (transform_anywhere_on() && *ret == 4) {
+        *ret = (g_env_light.mEvilInitialized & 0x80) ? 3 : 0;
+    }
 }
 
 // ---------------------------------------------------------------------------------------
@@ -1134,6 +1178,7 @@ ModResult on_new_save(void* ud, ModError* err) {
     g_state = {};
     g_state.seed = g_slotSeed;
     g_state.slot = g_conn.slot;
+    g_state.transformAnywhere = g_transformAnywhereSlot;
     write_state();
     write_conn();
     g_loadedHash = randomizer_GetContext().mHash;
@@ -1226,6 +1271,9 @@ std::string status_text() {
         s += fmt::format("\nItems received: {} / {}", g_state.received, g_serverItems.size());
         if (g_haveSlot) {
             s += fmt::format("\nChecks sent: {} / {}", g_checked.size(), g_locationIds.size());
+        }
+        if (g_state.transformAnywhere) {
+            s += "\nTransform anywhere: on (from your YAML)";
         }
         if (g_state.goal) {
             s += "\nGoal complete!";
@@ -1379,6 +1427,12 @@ ModResult activate() {
     {
         mods::log::error("archipelago: death link hooks failed to install; deaths won't be sent");
     }
+    if (mods::hook::add_post<ApMidnaSearchNpc>(post_midna_search_npc) != MOD_OK ||
+        mods::hook::add_post<ApMsgQuery042>(post_msg_query042) != MOD_OK)
+    {
+        mods::log::error("archipelago: transform anywhere hooks failed to install; turn on "
+                         "Dusklight's Can Transform Anywhere cheat instead");
+    }
 
     UiMenuTabDesc tab = UI_MENU_TAB_DESC_INIT;
     tab.label = "Archipelago";
@@ -1404,10 +1458,13 @@ void deactivate() {
     mods::hook::uninstall<ApGanondorf>();
     mods::hook::uninstall<ApLinkDeadInit>();
     mods::hook::uninstall<ApLinkFogDeadInit>();
+    mods::hook::uninstall<ApMidnaSearchNpc>();
+    mods::hook::uninstall<ApMsgQuery042>();
     g_pendingDeath.reset();
     g_killFrames = 0;
     g_deathSent = false;
     g_deathLinkSlot = false;
+    g_transformAnywhereSlot = false;
     if (g_menuTab != 0) {
         svc_mng.ui->unregister_menu_tab(svc_mng.mod_ctx, g_menuTab);
         g_menuTab = 0;
