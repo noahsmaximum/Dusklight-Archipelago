@@ -9,11 +9,14 @@
 
 Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, start a **new file**, and enter your server address, slot name and password. The seed builds from the server and you play.
 
-Needs Dusklight 2.0.1 or newer.
+Needs Dusklight 2.0.1 or newer. This mod carries its own copy of the randomizer, so Dusklight's built-in Randomizer doesn't need updating or removing; the two don't interfere.
 
-## What's new in 0.6.1
+## What's new in 1.0.0
+
+The first stable release.
 
 - **No more Can Transform Anywhere cheat.** When your YAML has Transform Anywhere logic on (Easy, Normal, Hard, Extreme, the template's default), the mod lets you transform in front of NPCs on that save by itself. The Archipelago tab (F1) shows it's on.
+- **The apworld is unchanged from 0.6.0** (1.5.0), so seeds generated with it work with this mod.
 
 New in 0.6.0: upstream's Faron Field poe fix, and the template no longer excludes Hyrule Castle.
 

@@ -16,6 +16,9 @@ You need three things:
    - Windows: `%APPDATA%\TwilitRealm\Dusklight\mods`
    - Linux: `~/.local/share/TwilitRealm/Dusklight/mods`
    - macOS: `~/Library/Application Support/TwilitRealm/Dusklight/mods`
+
+   It carries its own copy of the randomizer, so Dusklight's built-in Randomizer doesn't need
+   updating or removing; the two don't interfere.
 2. **The apworld.** Put `tp_dusklight.apworld` into your Archipelago install's `custom_worlds`
    folder. Whoever generates the multiworld needs it; players who only play need it for the
    tracker and text client.
