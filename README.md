@@ -177,3 +177,14 @@ that file to refresh them; nothing else needs to change.
 
 The randomizer, its logic data and its generator are by [Twilit Realm](https://github.com/TwilitRealm).
 This fork adds the Archipelago game mode, the network client and the apworld.
+
+## AI disclosure
+
+This fork's code, apworld and documentation were written with an AI coding assistant (Claude,
+through Claude Code), directed, reviewed and play-tested by the maintainer. The randomizer it's
+built on is Twilit Realm's work. Every release goes through automated tests (each preset's
+seeds rebuilt in the game's own generator and compared exactly, the TLS and compression suites,
+builds on every platform), but not every change has been played in game before release, so
+bugs can get through. Please
+[open an issue](https://github.com/noahsmaximum/dusklight-archipelago/issues) if something
+seems off.
