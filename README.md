@@ -24,6 +24,10 @@ You need three things:
    from the Archipelago Launcher; if you just installed or updated the apworld, restart the
    Launcher first, because it keeps using the apworld it loaded when it started.
 
+In Dusklight's settings, turn on **Can Transform Anywhere** (under Cheats). Every preset, and
+the template's default, has `logic_transform_anywhere` on, so logic may expect you to
+transform where NPCs can see you, which the game otherwise refuses.
+
 Then:
 
 1. Start Dusklight. On the Play button, use the arrows to pick **Archipelago**, and start it.

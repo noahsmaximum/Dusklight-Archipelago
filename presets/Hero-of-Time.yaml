@@ -44,7 +44,7 @@ Twilight Princess (Dusklight):
   goron_mines_entrance: closed
   mirror_chamber_access: closed
   faron_woods_logic: closed
-  logic_transform_anywhere: false
+  logic_transform_anywhere: true
   logic_increase_wallet_capacity: false
   logic_damage_multiplier: ohko
   bonks_do_damage: true

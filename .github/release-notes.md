@@ -6,6 +6,7 @@
    - macOS: `~/Library/Application Support/TwilitRealm/Dusklight/mods`
 2. **Apworld** — put `tp_dusklight.apworld` in your Archipelago `custom_worlds` folder.
 3. **YAML** — grab a preset below, or generate a template from the Archipelago Launcher. Set `name:` to your slot name.
+4. **Dusklight setting** — turn on **Can Transform Anywhere** (Settings → Cheats). Logic may expect you to transform where NPCs can see you.
 
 Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, start a **new file**, and enter your server address, slot name and password. The seed builds from the server and you play.
 
@@ -15,6 +16,7 @@ Needs Dusklight 2.0.1 or newer.
 
 - **Hyrule Castle no longer holds other players' important items.** It's the final dungeon, so anything a friend needed from there only turned up at the very end of your game. Every preset and the template exclude it, and it's now the default. Each dungeon is a location group: `exclude_locations: [Hyrule Castle, Palace of Twilight]` works too, and `[]` turns it off.
 - **Easy, Normal and Hard raise progression balancing** (90, 80, 70), so this game's progression turns up earlier and there's less waiting in the long tail.
+- **Every preset has Transform Anywhere logic on**, so turn on Dusklight's Can Transform Anywhere cheat (see Install).
 
 New in 0.5.0: seven presets sized by checks, the Shuffled Dungeons option, and WebSocket compression.
 

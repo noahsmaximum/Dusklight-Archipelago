@@ -43,6 +43,7 @@ Twilight Princess (Dusklight):
   hyrule_castle_big_key_requirements: none
   palace_of_twilight_requirements: mirror_shards
   temple_of_time_sword_requirement: none
+  logic_transform_anywhere: true
   logic_increase_wallet_capacity: true
 
   # Keep other players' important items out of the final dungeon, so nobody waits
