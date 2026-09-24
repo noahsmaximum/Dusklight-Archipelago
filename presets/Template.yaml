@@ -65,14 +65,6 @@ Twilight Princess (Dusklight):
     full: 50
     minimal: 0
 
-  exclude_locations:
-    # Prevent these locations from having an important item.
-    # 
-    # Defaults to Hyrule Castle, the final dungeon: anything another player needs from there
-    # only turns up at the very end of your game, so they'd wait on your whole run for it.
-    # Each dungeon is a group, e.g. `[Hyrule Castle, Palace of Twilight]`; `[]` excludes nothing.
-    ['Hyrule Castle']
-
   hyrule_barrier_requirements:
     # Hyrule Barrier Requirements.
     # 
@@ -690,6 +682,14 @@ Twilight Princess (Dusklight):
   ###########################
   # Item & Location Options #
   ###########################
+    exclude_locations:
+    # Prevent these locations from having an important item.
+    # 
+    # Defaults to Hyrule Castle, the final dungeon: anything another player needs from there
+    # only turns up at the very end of your game, so they'd wait on your whole run for it.
+    # Each dungeon is a group, e.g. `[Hyrule Castle, Palace of Twilight]`; `[]` excludes nothing.
+    []
+    
   local_items:
     # Forces these items to be in their native world.
     []
