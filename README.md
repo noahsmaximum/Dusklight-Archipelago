@@ -117,12 +117,12 @@ chests, keys, maps and big items. You still play them and logic still expects th
 they aren't checks, which is how the shorter presets get down to their size. The spoiler log
 lists which dungeons stayed vanilla.
 
-**Excluded locations default to Hyrule Castle.** It's the final dungeon, so an item another
-player needs from there only turns up at the very end of your game, and they'd wait on your
-whole run for it. Excluded checks still exist; they just never hold an item another player
-needs (a dungeon's own keys can still be inside it when keys stay in their dungeon). Each
-dungeon is a location group, so `exclude_locations: [Hyrule Castle, Palace of Twilight]`
-works, and `[]` turns it off.
+**Every preset excludes Hyrule Castle.** It's the final dungeon, so an item another player
+needs from there only turns up at the very end of your game, and they'd wait on your whole
+run for it. Excluded checks still exist; they just never hold an item another player needs
+(a dungeon's own keys can still be inside it when keys stay in their dungeon). Each dungeon
+is a location group, so `exclude_locations: [Hyrule Castle, Palace of Twilight]` works. The
+template and any YAML that leaves the option out exclude nothing.
 
 A few options are fixed by this world:
 

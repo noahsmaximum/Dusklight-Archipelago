@@ -6,10 +6,10 @@
 name: Player{number}
 description: Twilight Princess (Dusklight) - Hard
 game: Twilight Princess (Dusklight)
-# Starting with an item needs apworld 1.4.2 or newer.
+# Needs the apworld from the same release (or newer).
 requires:
   game:
-    Twilight Princess (Dusklight): 1.4.2
+    Twilight Princess (Dusklight): 1.5.0
 
 Twilight Princess (Dusklight):
   skip_prologue: true

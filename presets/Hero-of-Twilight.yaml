@@ -6,6 +6,10 @@
 name: Player{number}
 description: Twilight Princess (Dusklight) - Hero of Twilight
 game: Twilight Princess (Dusklight)
+# Needs the apworld from the same release (or newer).
+requires:
+  game:
+    Twilight Princess (Dusklight): 1.5.0
 
 Twilight Princess (Dusklight):
   skip_prologue: true

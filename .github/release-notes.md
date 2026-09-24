@@ -12,12 +12,12 @@ Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, st
 
 Needs Dusklight 2.0.1 or newer.
 
-## What's new in 0.5.2
+## What's new in 0.6.0
 
-- **Easy, Normal, Hard and Extreme start with the Shadow Crystal**, so you can turn into a wolf from the beginning, and expect Transform Anywhere: turn on Dusklight's Can Transform Anywhere cheat for them (see Install). Ultimate, Hero of Twilight and Hero of Time keep both vanilla.
-- **Starting inventory works.** `start_inventory` and `start_inventory_from_pool` used to stop generation with an error; they work now.
+- **Upstream randomizer update.** The Faron Field poe is now only expected after Midna's Desperate Hour and all three twilights, like the other field poes. Before, a seed with poes shuffled could put something you needed for a twilight on it. Also brings upstream's entrance randomizer fixes (entrance randomization stays off in multiworld) and a Bulblin Camp spawn fix.
+- **The template no longer excludes Hyrule Castle**, and neither does a YAML that leaves `exclude_locations` out. The presets still exclude it. The option is back under Item & Location Options.
 
-New in 0.5.1: Hyrule Castle holds no other player's important items by default, and Easy, Normal and Hard raise progression balancing.
+New in 0.5.2: Easy, Normal, Hard and Extreme start with the Shadow Crystal, and starting inventory works.
 
 ## Updating
 
