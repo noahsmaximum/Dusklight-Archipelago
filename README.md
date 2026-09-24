@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="res/icon.png" alt="Dusklight Archipelago logo" width="200">
+  <img src="res/banner.png" alt="Dusklight Archipelago logo" width="1300">
 </p>
 
 # Dusklight Archipelago
