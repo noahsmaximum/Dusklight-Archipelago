@@ -57,3 +57,10 @@ Twilight Princess (Dusklight):
   temple_of_time_sword_requirement: none
   logic_increase_wallet_capacity: true
   logic_damage_multiplier: vanilla
+
+  # Keep other players' important items out of the final dungeon, so nobody waits
+  # on the very end of this game for them.
+  exclude_locations: [Hyrule Castle]
+
+  # Pull this game's progression earlier, so there's less waiting in the long tail.
+  progression_balancing: 90

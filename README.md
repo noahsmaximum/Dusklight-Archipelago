@@ -86,6 +86,10 @@ unshuffled is random per seed, and dungeons differ in size.
 | Hero of Twilight | ~570 | Hard | Every possible check at Hard's difficulty. |
 | Hero of Time | ~570 | Hardest | Every possible check with Extreme's punishment, and every piece of junk replaced by a trap. |
 
+Every preset keeps other players' important items out of Hyrule Castle (see below), and Easy,
+Normal and Hard raise `progression_balancing` (90, 80, 70) so this game's progression turns up
+earlier and there's less waiting in the long tail.
+
 Copy one into your Archipelago `Players` folder and set `name:` to your slot name. The
 release also carries `Template.yaml`, the full template with every option explained.
 
@@ -104,6 +108,13 @@ shuffled into the multiworld. The rest, picked at random for each seed, keep the
 chests, keys, maps and big items. You still play them and logic still expects their items, but
 they aren't checks, which is how the shorter presets get down to their size. The spoiler log
 lists which dungeons stayed vanilla.
+
+**Excluded locations default to Hyrule Castle.** It's the final dungeon, so an item another
+player needs from there only turns up at the very end of your game, and they'd wait on your
+whole run for it. Excluded checks still exist; they just never hold an item another player
+needs (a dungeon's own keys can still be inside it when keys stay in their dungeon). Each
+dungeon is a location group, so `exclude_locations: [Hyrule Castle, Palace of Twilight]`
+works, and `[]` turns it off.
 
 A few options are fixed by this world:
 

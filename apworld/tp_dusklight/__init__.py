@@ -87,6 +87,13 @@ class TPWorld(World):
         "Big Keys": {n for n, it in _ITEMS.items() if it.big_key_of},
         "Portals": {n for n in _ITEMS if n.endswith(" Portal")},
     }
+    # One group per dungeon, so a YAML can write `exclude_locations: [Hyrule Castle]` rather
+    # than list every chest. Works with any Shuffled Dungeons value: create_regions drops an
+    # unshuffled dungeon's locations from the exclusions, since they aren't checks.
+    location_name_groups = {
+        dungeon: {n for n, loc in _REAL_LOCATIONS.items() if loc.has("Dungeon") and loc.has(dungeon)}
+        for dungeon in data.DUNGEONS
+    }
 
     settings_map: dict[str, str]
     progression_items: set[str]
@@ -333,6 +340,11 @@ class TPWorld(World):
             if rule is not True:
                 loc.access_rule = logic.as_callable(rule)
             region.locations.append(loc)
+
+        # Excluding only means something for a check. Locked locations (an unshuffled dungeon's
+        # contents, items vanilla by setting) keep their vanilla item whatever the YAML says,
+        # and Archipelago would warn "unable to exclude" for each one holding progression.
+        self.options.exclude_locations.value -= set(self._vanilla_locked)
 
         # Randomizer-intrinsic starting items (portals, start-with maps) as logic-only events
         self._starting = starting_items(self)

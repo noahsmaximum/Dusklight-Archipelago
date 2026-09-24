@@ -50,3 +50,7 @@ Twilight Princess (Dusklight):
   bonks_do_damage: true
   back_slice_as_sword: false
   ball_and_chain_webs: false
+
+  # Keep other players' important items out of the final dungeon, so nobody waits
+  # on the very end of this game for them.
+  exclude_locations: [Hyrule Castle]

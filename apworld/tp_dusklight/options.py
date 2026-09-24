@@ -9,8 +9,8 @@ import re
 from dataclasses import make_dataclass
 from typing import Any
 
-from Options import (Choice, DeathLink, DefaultOnToggle, PerGameCommonOptions, Range,
-                     StartInventoryPool, Toggle)
+from Options import (Choice, DeathLink, DefaultOnToggle, ExcludeLocations,
+                     PerGameCommonOptions, Range, StartInventoryPool, Toggle)
 
 from . import data
 
@@ -121,6 +121,15 @@ def _make_option(info: data.SettingInfo) -> type:
     return type(option_key(info.name).title().replace("_", ""), (Choice,), attrs)
 
 
+class TPExcludeLocations(ExcludeLocations):
+    """Prevent these locations from having an important item.
+
+    Defaults to Hyrule Castle, the final dungeon: anything another player needs from there
+    only turns up at the very end of your game, so they'd wait on your whole run for it.
+    Each dungeon is a group, e.g. `[Hyrule Castle, Palace of Twilight]`; `[]` excludes nothing."""
+    default = frozenset({"Hyrule Castle"})
+
+
 class ShuffledDungeons(Range):
     """How many of the nine dungeons have their contents shuffled into the multiworld.
 
@@ -146,6 +155,8 @@ for _info in data.settings().values():
 # Archipelago-only: decided here, sent to the mod as explicit placements (see fill_slot_data).
 _fields.append(("shuffled_dungeons", ShuffledDungeons))
 _fields.append(("start_inventory_from_pool", StartInventoryPool))
+# Overrides Archipelago's common option only to change its default (see TPExcludeLocations).
+_fields.append(("exclude_locations", TPExcludeLocations))
 # Archipelago's own option, not a randomizer setting: the mod joins the DeathLink channel.
 _fields.append(("death_link", DeathLink))
 

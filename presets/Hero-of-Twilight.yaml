@@ -45,3 +45,7 @@ Twilight Princess (Dusklight):
   logic_transform_anywhere: false
   logic_increase_wallet_capacity: false
   logic_damage_multiplier: double
+
+  # Keep other players' important items out of the final dungeon, so nobody waits
+  # on the very end of this game for them.
+  exclude_locations: [Hyrule Castle]

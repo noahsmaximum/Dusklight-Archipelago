@@ -11,13 +11,12 @@ Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, st
 
 Needs Dusklight 2.0.1 or newer.
 
-## What's new in 0.5.0
+## What's new in 0.5.1
 
-- **Seven presets, sized by checks.** Easy ~150, Normal ~200, Hard ~300, Extreme ~450, and three full games — Ultimate (Normal difficulty), Hero of Twilight (Hard) and Hero of Time (hardest, every junk item a trap) — at ~570.
-- **New option: Shuffled Dungeons (0–9).** Only that many dungeons, picked at random, are checks; the rest keep their vanilla contents. You still play them, they just aren't checks. This is how the shorter presets get short.
-- **Leaving an option out now gives the most checks.** Every optional shuffle is on by default, so the default template is the whole game. Start from a preset for anything shorter.
-- **The template ships with every release** as `Template.yaml`, with every option explained in the randomizer's own words.
-- **WebSocket compression.** Archipelago servers no longer warn that your client doesn't support compressed connections.
+- **Hyrule Castle no longer holds other players' important items.** It's the final dungeon, so anything a friend needed from there only turned up at the very end of your game. Every preset and the template exclude it, and it's now the default. Each dungeon is a location group: `exclude_locations: [Hyrule Castle, Palace of Twilight]` works too, and `[]` turns it off.
+- **Easy, Normal and Hard raise progression balancing** (90, 80, 70), so this game's progression turns up earlier and there's less waiting in the long tail.
+
+New in 0.5.0: seven presets sized by checks, the Shuffled Dungeons option, and WebSocket compression.
 
 ## Updating
 
