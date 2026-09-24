@@ -11,14 +11,11 @@ Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, st
 
 Needs Dusklight 2.0.1 or newer. This mod carries its own copy of the randomizer, so Dusklight's built-in Randomizer doesn't need updating or removing; the two don't interfere.
 
-## What's new in 1.0.0
+## What's new in 1.0.1
 
-The first stable release.
+- **A look of its own:** the Dusklight Archipelago logo and banner in the mod manager, and "Twilight Princess Archipelago" on the title screen in Archipelago mode.
 
-- **No more Can Transform Anywhere cheat.** When your YAML has Transform Anywhere logic on (Easy, Normal, Hard, Extreme, the template's default), the mod lets you transform in front of NPCs on that save by itself. The Archipelago tab (F1) shows it's on.
-- **The apworld is unchanged from 0.6.0** (1.5.0), so seeds generated with it work with this mod.
-
-New in 0.6.0: upstream's Faron Field poe fix, and the template no longer excludes Hyrule Castle.
+New in 1.0.0: no more Can Transform Anywhere cheat; the mod handles it for Transform Anywhere seeds. The apworld is unchanged since 0.6.0 (1.5.0).
 
 ## Updating
 
