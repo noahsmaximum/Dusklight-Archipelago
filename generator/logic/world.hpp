@@ -123,7 +123,7 @@ namespace randomizer::logic::world
         void FinalizeBottleContents();
         void AddPlandomizedLocation(location::Location* location, item::Item* item);
         void AddPlandomizedEntrance(entrance::Entrance* entrance, entrance::Entrance* target);
-        std::unordered_map<entrance::Entrance*, entrance::Entrance*> GetPlandomizerEntrances();
+        std::map<entrance::Entrance*, entrance::Entrance*, entrance::PointerTypeCompare> GetPlandomizerEntrances();
 
         dungeon::Dungeon* GetDungeon(const std::string& name);
         const std::map<std::string, std::unique_ptr<dungeon::Dungeon>>& GetDungeonTable() const;
@@ -155,6 +155,7 @@ namespace randomizer::logic::world
 
         seedgen::settings::Setting& Setting(const std::string& settingName);
         bool AnyEntranceRandomizerEnabled();
+        bool AdjustBossReturns();
 
         TextDatabase& GetTextDatabase() { return this->_textDatabase; }
         const std::string& GetText(const std::string& name, Text::Type type = Text::STANDARD, Text::Language language = Text::ENGLISH) {
@@ -210,7 +211,7 @@ namespace randomizer::logic::world
 
         // Plandomizer Data
         std::unordered_map<location::Location*, item::Item*> _plandomizerLocations = {};
-        std::unordered_map<entrance::Entrance*, entrance::Entrance*> _plandomizerEntrances = {};
+        std::map<entrance::Entrance*, entrance::Entrance*, entrance::PointerTypeCompare> _plandomizerEntrances = {};
 
         // Hint stuff
         std::list<location::Location*> _goalLocations = {};

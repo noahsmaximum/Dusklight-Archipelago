@@ -32,6 +32,9 @@ namespace randomizer::logic::entrance_shuffle
     void ChangeConnections(entrance::Entrance* entrance, entrance::Entrance* target);
     void RestoreConnections(entrance::Entrance* entrance, entrance::Entrance* target);
     void ConfirmReplacement(entrance::Entrance* entrance, entrance::Entrance* target);
+    void CheckAndChangeBossReturn(entrance::Entrance* entrance, entrance::Entrance* target);
+    void CheckAndRestoreBossReturn(entrance::Entrance* entrance, entrance::Entrance* target);
+    void CheckAndConfirmBossReturn(entrance::Entrance* entrance, entrance::Entrance* target);
     void DeleteTargetEntrance(entrance::Entrance* target);
     void ValidateWorld(world::World* world,
                        entrance::Entrance* entrance,

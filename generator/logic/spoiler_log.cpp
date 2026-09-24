@@ -213,6 +213,11 @@ namespace randomizer::logic::spoiler_log
                 auto mixedPools = world->GetSettings().GetMixedEntrancePools();
                 for (auto& [entranceType, entrancePool] : entrancePools)
                 {
+                    // Ignore boss reverse entrances if we adjusted them
+                    if (entranceType == entrance::BOSS_REVERSE && world->AdjustBossReturns()) {
+                        continue;
+                    }
+
                     auto typeStr = entrance::TypeToStr(entranceType);
                     // If this is a mixed pool, display the types it mixed
                     if (typeStr.starts_with("Mixed Pool"))

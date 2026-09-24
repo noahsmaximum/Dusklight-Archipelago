@@ -393,7 +393,7 @@
     Faron Field Tree Heart Piece: Clawshot or Gale_Boomerang # or Ball and Chain if trick
     Faron Field Male Beetle: Nothing
     Faron Field Female Beetle: Clawshot or Gale_Boomerang # or Ball and Chain if trick
-    Faron Field Poe: Can_Use_Senses and Night
+    Faron Field Poe: Can_Use_Senses and Night and Can_Complete_MDH and Can_Complete_All_Twilight
     Faron Field Hint Sign: Nothing
   Exits:
     Faron Field Behind Boulder: Can_Use_Hot_Spring_Water and 'Can_Access_Outside_Castle_Town_South'

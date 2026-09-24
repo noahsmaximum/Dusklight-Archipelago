@@ -32,6 +32,11 @@ namespace randomizer::logic::entrance_shuffle
         // Shuffle the rest of the entrance pools
         for (auto& [entranceType, entrancePool] : entrancePools)
         {
+            // Skip shuffling reverse boss entrances if we're adjusting them later based on dungeon
+            // entrances
+            if (world->AdjustBossReturns() && entranceType == BOSS_REVERSE) {
+                continue;
+            }
             ShuffleEntrancePool(entrancePool, targetEntrancePools[entranceType]);
         }
 
@@ -50,6 +55,13 @@ namespace randomizer::logic::entrance_shuffle
         {
             // Check to make sure all required fields are present
             YAMLVerifyFields(entranceDataNode, "Type", "Forward");
+
+            // Check if we only want to load this data under certain conditions
+            if (entranceDataNode["Only If"]) {
+                if (!world->EvaluateSettingCondition(entranceDataNode["Only If"].as<std::string>())) {
+                    continue;
+                }
+            }
 
             auto typeStr = entranceDataNode["Type"].as<std::string>();
             auto type = TypeFromStr(typeStr);
@@ -88,6 +100,14 @@ namespace randomizer::logic::entrance_shuffle
             if (forwardEntry["Follower Entrances"]) {
                 forwardEntrance->SetFollowerEntrances(forwardEntry["Follower Entrances"]);
             }
+            if (forwardEntry["Dungeon Stage Returns"]) {
+                forwardEntrance->SetDungeonStageReturns(forwardEntry["Dungeon Stage Returns"]);
+            }
+            if (forwardEntry["Boss Entrance"]) {
+                const auto& bossEntranceName = forwardEntry["Boss Entrance"].as<std::string>();
+                auto bossEntrance = world->GetEntrance(bossEntranceName);
+                forwardEntrance->SetBossEntrance(bossEntrance);
+            }
 
             Entrance* returnEntrance = nullptr;
             if (entranceDataNode["Return"])
@@ -120,11 +140,15 @@ namespace randomizer::logic::entrance_shuffle
                 }
             }
 
-            if (entranceDataNode["Ooccoo"]) {
-                auto& ooccooEntry = entranceDataNode["Ooccoo"];
-                forwardEntrance->SetOoccooInfo(ooccooEntry);
-                if (returnEntrance) {
-                    returnEntrance->SetOoccooInfo(ooccooEntry);
+            // Set any extra override data this entrance has
+            if (entranceDataNode["Extra Override Data"]) {
+                for (const auto& entry : entranceDataNode["Extra Override Data"]) {
+                    const auto& name = entry.first.as<std::string>();
+                    const auto& data = entry.second;
+                    forwardEntrance->SetExtraOverrideInfo(name, data);
+                    if (returnEntrance) {
+                        returnEntrance->SetExtraOverrideInfo(name, data);
+                    }
                 }
             }
         }
@@ -291,6 +315,24 @@ namespace randomizer::logic::entrance_shuffle
                         entrance->SetDecoupled(true);
                     }
                 }
+            }
+        }
+
+        // If we're adjusting boss returns to account for randomized dungeon entrances,
+        // decouple the forward boss entrances which have out-of-dungeon return entrances.
+        // Then decouple all reverse boss entrances. We'll set the boss returns while setting
+        // forward dungeon entrances in this scenario.
+        if (world->AdjustBossReturns())
+        {
+            for (auto& entrance : entrancePools.at(DUNGEON)) {
+                if (entrance->GetBossEntrance()) {
+                    entrance->GetBossEntrance()->SetDecoupled(true);
+                    entrancePools[BOSS_REVERSE].push_back(entrance->GetBossEntrance()->GetReverse());
+                }
+            }
+
+            for (auto& entrance : entrancePools.at(BOSS)) {
+                entrance->GetReverse()->SetDecoupled(true);
             }
         }
 
@@ -726,6 +768,7 @@ namespace randomizer::logic::entrance_shuffle
             target->GetReplaces()->GetReverse()->Connect(entrance->GetReverse()->GetAssumed()->Disconnect());
             target->GetReplaces()->GetReverse()->SetReplaces(entrance->GetReverse());
         }
+        CheckAndChangeBossReturn(entrance, target);
     }
 
     void RestoreConnections(Entrance* entrance, Entrance* target)
@@ -737,10 +780,12 @@ namespace randomizer::logic::entrance_shuffle
             entrance->GetReverse()->GetAssumed()->Connect(target->GetReplaces()->GetReverse()->Disconnect());
             target->GetReplaces()->GetReverse()->SetReplaces(nullptr);
         }
+        CheckAndRestoreBossReturn(entrance, target);
     }
 
     void ConfirmReplacement(Entrance* entrance, Entrance* target)
     {
+        CheckAndConfirmBossReturn(entrance, target);
         DeleteTargetEntrance(target);
         LOG_TO_DEBUG("Finalized Connection " + entrance->GetOriginalName() + " to " + entrance->GetConnectedArea()->GetName() +
                      " [W" + std::to_string(entrance->GetWorld()->GetID()) + "]");
@@ -751,6 +796,91 @@ namespace randomizer::logic::entrance_shuffle
                          replacedReverse->GetConnectedArea()->GetName() + " [W" +
                          std::to_string(entrance->GetWorld()->GetID()) + "]");
             DeleteTargetEntrance(entrance->GetReverse()->GetAssumed());
+        }
+    }
+
+    void CheckAndChangeBossReturn(Entrance* entrance, Entrance* target) {
+        if (!entrance->GetWorld()->AdjustBossReturns()) {
+            return;
+        }
+
+        auto bossEntrance = target->GetReplaces()->GetBossEntrance();
+        if (bossEntrance)
+        {
+            // TODO: Properly account for this without needing to also plandomize the boss entrance
+            if (!bossEntrance->GetReplaces()) {
+                throw std::runtime_error("Randomized boss entrance is not set for plandomized dungeon connection " +
+                    entrance->GetCurrentName() + ". Please plandomize the associated boss connection as well.");
+            }
+
+            // If this is a dungeon entrance with a natural out-of-dungeon boss return, set the
+            // proper boss return for the boss found inside this dungeon. If the dungeon this entrance
+            // is randomized to expects an out-of-dungeon boss return, but this dungeon doesn't have one,
+            // just use the reverse of entering the dungeon (i.e. falling into Lake Hylia when exiting CitS)
+            if (entrance->GetBossEntrance()) {
+                auto bossReturn = entrance->GetBossEntrance()->GetReverse();
+                ChangeConnections(bossEntrance->GetReplaces()->GetReverse(), bossReturn->GetAssumed());
+            } else {
+                auto bossReturn = entrance->GetReverse();
+                bossEntrance->GetReplaces()->GetReverse()->Connect(bossReturn->GetOriginalConnectedArea());
+                bossEntrance->GetReplaces()->GetReverse()->SetReplaces(bossReturn);
+            }
+
+            // Special case where we need to also set the entrance returning from the mirror chamber
+            // to Arbiters Grounds to lead to whatever boss is inside the dungeon that the Arbiters
+            // Grounds entrance leads to.
+            if (entrance->GetAlias() == "Outside Arbiters Grounds -> Arbiters Grounds") {
+                auto mirrorToAG = entrance->GetWorld()->GetEntrance("Mirror Chamber Lower -> Arbiters Grounds Boss Room");
+                if (mirrorToAG->GetConnectedArea()) {
+                    mirrorToAG->Disconnect();
+                }
+                mirrorToAG->Connect(entrance->GetReplaces()->GetBossEntrance()->GetConnectedArea());
+                mirrorToAG->SetReplaces(entrance->GetReplaces()->GetBossEntrance()->GetReplaces());
+            }
+        } else if (entrance->GetBossEntrance()) {
+            entrance->GetBossEntrance()->GetReverse()->GetAssumed()->Disconnect();
+        }
+    }
+
+    void CheckAndRestoreBossReturn(Entrance* entrance, Entrance* target) {
+        if (!entrance->GetWorld()->AdjustBossReturns()) {
+            return;
+        }
+
+        auto bossEntrance = target->GetReplaces()->GetBossEntrance();
+        if (bossEntrance)
+        {
+            if (entrance->GetBossEntrance()) {
+                auto bossReturn = entrance->GetBossEntrance()->GetReverse();
+                RestoreConnections(bossEntrance->GetReplaces()->GetReverse(), bossReturn->GetAssumed());
+            } else {
+                bossEntrance->GetReplaces()->GetReverse()->Disconnect();
+                bossEntrance->GetReplaces()->GetReverse()->SetReplaces(nullptr);
+            }
+            if (entrance->GetAlias() == "Outside Arbiters Grounds -> Arbiters Grounds") {
+                auto mirrorToAG = entrance->GetWorld()->GetEntrance("Mirror Chamber Lower -> Arbiters Grounds Boss Room");
+                mirrorToAG->Disconnect();
+                mirrorToAG->SetReplaces(nullptr);
+            }
+        } else if (entrance->GetBossEntrance()) {
+            entrance->GetBossEntrance()->GetReverse()->GetAssumed()->Connect(entrance->GetBossEntrance()->GetReverse()->GetOriginalConnectedArea());
+        }
+    }
+
+    void CheckAndConfirmBossReturn(Entrance* entrance, Entrance* target) {
+        if (!entrance->GetWorld()->AdjustBossReturns()) {
+            return;
+        }
+
+        auto bossEntrance = target->GetReplaces()->GetBossEntrance();
+        if (bossEntrance)
+        {
+            if (entrance->GetBossEntrance()) {
+                auto bossReturn = entrance->GetBossEntrance()->GetReverse();
+                ConfirmReplacement(bossEntrance->GetReplaces()->GetReverse(), bossReturn->GetAssumed());
+            }
+        } else if (entrance->GetBossEntrance()) {
+            DeleteTargetEntrance(entrance->GetBossEntrance()->GetReverse()->GetAssumed());
         }
     }
 

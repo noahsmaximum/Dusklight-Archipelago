@@ -343,4 +343,10 @@
     Snowpeak Ruins Blizzeta Heart Container: Can_Defeat_Blizzeta
     Snowpeak Ruins Dungeon Reward: Can_Defeat_Blizzeta
   Exits:
-    Snowpeak Summit Lower: Can_Defeat_Blizzeta
+    # If dungeon entrances are randomized and double door entrances are decoupled, we want to instead
+    # change the default warp out of the Snowpeak boss room from being outside the dungeon to inside
+    # the dungeon. Otherwise, we'd have to arbitrarily choose either of the entrances which lead into
+    # Snowpeak Ruins as the default return spot for the boss warp. Keeping the boss warp inside the dungeon
+    # solves this issue.
+    Snowpeak Summit Lower: Can_Defeat_Blizzeta and (Randomize_Dungeon_Entrances != On or Decouple_Double_Door_Entrances != On)
+    Snowpeak Ruins Entrance: Can_Defeat_Blizzeta and Randomize_Dungeon_Entrances == On and Decouple_Double_Door_Entrances == On

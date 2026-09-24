@@ -1700,24 +1700,35 @@ RandomizerContext WriteSeedData(randomizer::logic::world::World* world) {
         }
     }
 
-    // Vanilla Return to Place Overrides. Will need to change when boss/miniboss ER is implemented
-    static const std::vector<std::pair<std::vector<int>, RandomizerContext::EntranceOverride>> defaultPlaceOverrides{
-        {{Forest_Temple, Ook, Diababa},                      {.stageId = Forest_Temple, .roomNo = 22, .mapLayer = -1, .pointNo = 0}},
-        {{Goron_Mines, Dangoro, Fyrus},                      {.stageId = Goron_Mines, .roomNo = 1, .mapLayer = -1, .pointNo = 0}},
-        {{Lakebed_Temple, Deku_Toad, Morpheel},              {.stageId = Lakebed_Temple, .roomNo = 0, .mapLayer = -1, .pointNo = 0}},
-        {{Arbiters_Grounds, Death_Sword, Stallord},          {.stageId = Arbiters_Grounds, .roomNo = 0, .mapLayer = -1, .pointNo = 0}},
-        {{Snowpeak_Ruins, Darkhammer, Blizzeta},             {.stageId = Snowpeak_Ruins, .roomNo = 0, .mapLayer = -1, .pointNo = 0}},
-        {{Temple_of_Time, Darknut, Armogohma},               {.stageId = Temple_of_Time, .roomNo = 0, .mapLayer = -1, .pointNo = 0}},
-        {{City_in_the_Sky, Aeralfos, Argorok},               {.stageId = City_in_the_Sky, .roomNo = 0, .mapLayer = -1, .pointNo = 3}},
-        {{Palace_of_Twilight, Phantom_Zant_1,
-                Phantom_Zant_2, Zant_Main_Room, Zant_Fight},     {.stageId = Palace_of_Twilight, .roomNo = 0, .mapLayer = -1, .pointNo = 0}},
-        {{Hyrule_Castle, Ganondorf_Castle, Ganondorf_Field}, {.stageId = Hyrule_Castle, .roomNo = 11, .mapLayer = -1, .pointNo = 0}},
+    static const std::map<std::string, RandomizerContext::EntranceOverride> defaultReturnPlaces = {
+        {"Forest Temple",      {.stageId = Forest_Temple, .roomNo = 22, .mapLayer = -1, .pointNo = 0}},
+        {"Goron Mines",        {.stageId = Goron_Mines, .roomNo = 1, .mapLayer = -1, .pointNo = 0}},
+        {"Lakebed Temple",     {.stageId = Lakebed_Temple, .roomNo = 0, .mapLayer = -1, .pointNo = 0}},
+        {"Arbiters Grounds",   {.stageId = Arbiters_Grounds, .roomNo = 0, .mapLayer = -1, .pointNo = 0}},
+        {"Snowpeak Ruins",     {.stageId = Snowpeak_Ruins, .roomNo = 0, .mapLayer = -1, .pointNo = 0}},
+        {"Temple of Time",     {.stageId = Temple_of_Time, .roomNo = 0, .mapLayer = -1, .pointNo = 0}},
+        {"City in the Sky",    {.stageId = City_in_the_Sky, .roomNo = 0, .mapLayer = -1, .pointNo = 3}},
+        {"Palace of Twilight", {.stageId = Palace_of_Twilight, .roomNo = 0, .mapLayer = -1, .pointNo = 0}},
+        {"Hyrule Castle",      {.stageId = Hyrule_Castle, .roomNo = 11, .mapLayer = -1, .pointNo = 0}},
+    };
+
+    // Vanilla Return to Place Overrides.
+    static const std::vector<std::pair<std::vector<int>, std::string>> defaultPlaceOverrides{
+        {{Forest_Temple, Ook},                                 "Forest Temple"},
+        {{Goron_Mines, Dangoro},                               "Goron Mines"},
+        {{Lakebed_Temple, Deku_Toad},                          "Lakebed Temple"},
+        {{Arbiters_Grounds, Death_Sword},                      "Arbiters Grounds"},
+        {{Snowpeak_Ruins, Darkhammer},                         "Snowpeak Ruins"},
+        {{Temple_of_Time, Darknut},                            "Temple of Time"},
+        {{City_in_the_Sky, Aeralfos},                          "City in the Sky"},
+        {{Palace_of_Twilight, Phantom_Zant_1, Phantom_Zant_2}, "Palace of Twilight"},
+        {{Hyrule_Castle, Ganondorf_Castle, Ganondorf_Field},   "Hyrule Castle"},
     };
 
     // Return to Place Overrides
     for (const auto& [stages, returnPlace] : defaultPlaceOverrides) {
         for (auto stage : stages) {
-            randoData.mReturnToPlaceOverrides[stage] = returnPlace;
+            randoData.mReturnToPlaceOverrides[stage] = defaultReturnPlaces.at(returnPlace);
         }
     }
 
@@ -1738,19 +1749,36 @@ RandomizerContext WriteSeedData(randomizer::logic::world::World* world) {
                 randoData.mEntranceOverrides[coupled] = replaces;
             }
 
-            // Set Ooccoo overrides
-            if (entrance->GetReplaces()->IsPrimary() && entrance->GetReplaces()->HasOoccoo()) {
-                const auto& ooccooData = entrance->GetReplaces()->GetOoccoo();
-                RandomizerContext::EntranceOverride ooccooForward = {.stageId = ooccooData._stageId, .roomNo = ooccooData._roomNo, .mapLayer = ooccooData._layerNo, .pointNo = ooccooData._pointNo};
-                RandomizerContext::EntranceOverride ooccooReplaces = {.stageId = entrance->GetReverse()->GetStageId(),
-                    .roomNo = entrance->GetReverse()->GetRoomNo(), .mapLayer = entrance->GetReverse()->GetLayerNo(),
-                    .pointNo = entrance->GetReverse()->GetPointNo()};
-                if (entrance->GetReverse()->HasOoccoo()) {
-                    const auto& reverseOoccooData = entrance->GetReverse()->GetOoccoo();
-                    ooccooReplaces = {.stageId = reverseOoccooData._stageId, .roomNo = reverseOoccooData._roomNo, .mapLayer = reverseOoccooData._layerNo, .pointNo = reverseOoccooData._pointNo};
-                }
+            // Set overrides for extra override data
+            if (entrance->GetType() != randomizer::logic::entrance::NONE &&
+                entrance->GetReplaces()->IsPrimary() &&
+                entrance->GetReplaces()->HasExtraOverrideData()) {
+                for (const auto& [name, data] : entrance->GetReplaces()->GetExtraOverrideData()) {
+                    RandomizerContext::EntranceOverride dataForward = {.stageId = data.stageId, .roomNo = data.roomNo, .mapLayer = data.layerNo, .pointNo = data.pointNo};
+                    RandomizerContext::EntranceOverride dataReplaces = {.stageId = entrance->GetReverse()->GetStageId(),
+                        .roomNo = entrance->GetReverse()->GetRoomNo(), .mapLayer = entrance->GetReverse()->GetLayerNo(),
+                        .pointNo = entrance->GetReverse()->GetPointNo()};
 
-                randoData.mEntranceOverrides[ooccooForward] = ooccooReplaces;
+                    // If the reverse of this entrance has the same type of extra override data, then use that as the override instead
+                    if (entrance->GetReverse()->HasExtraOverrideData(name)) {
+                        const auto& reverseData = entrance->GetReverse()->GetExtraOverrideData().at(name);
+                        dataReplaces = {.stageId = reverseData.stageId, .roomNo = reverseData.roomNo, .mapLayer = reverseData.layerNo, .pointNo = reverseData.pointNo};
+                    }
+
+                    randoData.mEntranceOverrides[dataForward] = dataReplaces;
+                }
+            }
+
+            // Set dungeon return places
+            const auto& dungeonReturnStages = entrance->GetReplaces()->GetDungeonStageReturns();
+            if (!dungeonReturnStages.empty()) {
+                auto regions = entrance->GetParentArea()->GetHintRegions();
+                if (regions.size() == 1 && defaultReturnPlaces.contains(*regions.begin())) {
+                    auto dungeon = *regions.begin();
+                    for (auto stageId : dungeonReturnStages) {
+                        randoData.mReturnToPlaceOverrides[stageId] = defaultReturnPlaces.at(dungeon);
+                    }
+                }
             }
         }
     }
@@ -1758,7 +1786,6 @@ RandomizerContext WriteSeedData(randomizer::logic::world::World* world) {
     // Set exiting the Arbiter's Grounds Boss Room to spawn at the Arbiter's Grounds entrance
     // if mirror chamber access is closed
     if (world->Setting("Mirror Chamber Access") == "Closed") {
-
         RandomizerContext::EntranceOverride mirrorChamberEntrance = {
             .stageId = StageIDs::Mirror_Chamber,
             .roomNo = 4,
@@ -1786,6 +1813,39 @@ RandomizerContext WriteSeedData(randomizer::logic::world::World* world) {
             for (auto& override : randoData.mEntranceOverrides | std::views::values) {
                 if (override == mirrorChamberEntrance) {
                     override = mirrorChamberOverride;
+                }
+            }
+        }
+    }
+
+    // If dungeon entrances are randomized and double doors are decoupled, set the return of the
+    // Blizzeta boss warp to be inside Snowpeak ruins. Otherwise, we have to arbitrarily choose
+    // between one of the two entrances that now leads into Snowpeak
+    if (world->Setting("Randomize Dungeon Entrances") == "On" &&
+        world->Setting("Decouple Double Door Entrances") == "On") {
+        RandomizerContext::EntranceOverride defaultBlizzetaBossReturn = {
+            .stageId = Snowpeak,
+            .roomNo = 1,
+            .mapLayer = -1,
+            .pointNo = 11,
+        };
+
+        RandomizerContext::EntranceOverride decoupledDoorBlizzetaBossReturn = {
+            .stageId = Snowpeak_Ruins,
+            .roomNo = 0,
+            .mapLayer = -1,
+            .pointNo = 0,
+        };
+
+        // If boss entrance rando is off, then we set this manually
+        if (world->Setting("Randomize Boss Entrances") == "Off") {
+            randoData.mEntranceOverrides[defaultBlizzetaBossReturn] = decoupledDoorBlizzetaBossReturn;
+        } else {
+            // If boss entrances are randomized, then loop through and change all overrides which match
+            // the default Blizzeta boss warp entrance (this could be multiple if bosses are mixed with doors).
+            for (auto& override : randoData.mEntranceOverrides | std::views::values) {
+                if (override == defaultBlizzetaBossReturn) {
+                    override = decoupledDoorBlizzetaBossReturn;
                 }
             }
         }

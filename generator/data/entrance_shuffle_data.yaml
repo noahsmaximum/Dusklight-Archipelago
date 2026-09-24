@@ -180,6 +180,7 @@
     Spawn Type: "00" 
     Parameters: "F09F"
     State: -1
+    Boss Entrance: Forest Temple Boss Door Room North Side -> Forest Temple Boss Room
   Return:
     Connection: Forest Temple Entrance -> North Faron Woods
     Alias: Forest Temple -> Faron Woods
@@ -189,13 +190,14 @@
     Spawn Type: "50"
     Parameters: "F01F"
     State: -1
-  Ooccoo:
-    Stage: 45
-    Room: 6
-    Spawn: 150
-    Spawn Type: "0C"
-    Parameters: ""
-    State: -1
+  Extra Override Data:
+    Ooccoo:
+      Stage: 45
+      Room: 6
+      Spawn: 150
+      Spawn Type: "0C"
+      Parameters: ""
+      State: -1
 
 - Type: Dungeon
   Forward:
@@ -207,6 +209,7 @@
     Spawn Type: "00" 
     Parameters: "F01F"
     State: -1
+    Boss Entrance: Goron Mines Boss Door Room Near Boss Door -> Goron Mines Boss Room
   Return:
     Connection: Goron Mines Entrance -> Death Mountain Sumo Hall Goron Mines Tunnel
     Alias: Goron Mines -> Death Mountain Sumo Hall
@@ -216,13 +219,14 @@
     Spawn Type: "50"
     Parameters: "F01F"
     State: -1
-  Ooccoo:
-    Stage: 47
-    Room: 3
-    Spawn: 6
-    Spawn Type: "0C"
-    Parameters: ""
-    State: -1
+  Extra Override Data:
+    Ooccoo:
+      Stage: 47
+      Room: 3
+      Spawn: 6
+      Spawn Type: "0C"
+      Parameters: ""
+      State: -1
 
 - Type: Dungeon
   Forward:
@@ -234,6 +238,7 @@
     Spawn Type: "00"
     Parameters: "F09F"
     State: -1
+    Boss Entrance: Lakebed Temple Central Room Past Boss Door -> Lakebed Temple Boss Room
   Return:
     Connection: Lakebed Temple Entrance -> Lake Hylia Lakebed Temple Entrance
     Alias: Lakebed Temple -> Lake Hylia
@@ -243,13 +248,14 @@
     Spawn Type: "D0"
     Parameters: "F01F"
     State: -1
-  Ooccoo:
-    Stage: 52
-    Room: 0
-    Spawn: 150
-    Spawn Type: "0C"
-    Parameters: ""
-    State: -1
+  Extra Override Data:
+    Ooccoo:
+      Stage: 52
+      Room: 0
+      Spawn: 150
+      Spawn Type: "0C"
+      Parameters: ""
+      State: -1
 
 - Type: Dungeon
   Forward:
@@ -261,6 +267,7 @@
     Spawn Type: "00"
     Parameters: "F01F"
     State: -1
+    Boss Entrance: Arbiters Grounds Socket Room Near Boss Door -> Arbiters Grounds Boss Room
   Return:
     Connection: Arbiters Grounds Entrance -> Outside Arbiters Grounds
     Alias: Arbiters Grounds -> Outside Arbiters Grounds
@@ -270,16 +277,91 @@
     Spawn Type: "50"
     Parameters: "F01F"
     State: -1
-  Ooccoo:
-    Stage: 55
-    Room: 3
-    Spawn: 5
-    Spawn Type: "0C"
-    Parameters: ""
+  Extra Override Data:
+    Ooccoo:
+      Stage: 55
+      Room: 3
+      Spawn: 5
+      Spawn Type: "0C"
+      Parameters: ""
+      State: -1
+
+# If dungeon entrances are randomized and double door entrances are decoupled, we want to instead
+# change the default warp out of the Snowpeak boss room from being outside the dungeon to inside
+# the dungeon. Otherwise, we'd have to arbitrarily choose either of the entrances which lead into
+# Snowpeak Ruins as the default return spot for the boss warp. Keeping the boss warp inside the dungeon
+# solves this issue.
+
+# If either dungeon entrances aren't randomized, or double doors aren't decoupled, define
+# the data for Snowpeak ruins normally
+- Type: Dungeon
+  Entrance Couple Tag: Snowpeak Ruins Entrance
+  Only If: Randomize_Dungeon_Entrances != On or Decouple_Double_Door_Entrances != On
+  Forward:
+    Connection: Snowpeak Ruins East Door Exterior -> Snowpeak Ruins East Door Interior
+    Alias: Outside Snowpeak Ruins -> Snowpeak Ruins East Door
+    Stage: 27
+    Room: 0
+    Spawn: 2
+    Spawn Type: "A0"
+    Parameters: "F01F"
     State: -1
+    Boss Entrance: Snowpeak Ruins West Courtyard North Balcony -> Snowpeak Ruins Boss Room
+  Return:
+    Connection: Snowpeak Ruins East Door Interior -> Snowpeak Ruins East Door Exterior
+    Alias: Snowpeak Ruins East Door -> Outside Snowpeak Ruins
+    Stage: 51
+    Room: 1
+    Spawn: 10
+    Spawn Type: "0B"
+    Parameters: "F01F"
+    State: -1
+  Extra Override Data:
+    Ooccoo:
+      Stage: 51
+      Room: 1
+      Spawn: 13
+      Spawn Type: "0C"
+      Parameters: ""
+      State: -1
 
 - Type: Dungeon
   Entrance Couple Tag: Snowpeak Ruins Entrance
+  Only If: Randomize_Dungeon_Entrances != On or Decouple_Double_Door_Entrances != On
+  Forward:
+    Connection: Snowpeak Ruins West Door Exterior -> Snowpeak Ruins West Door Interior
+    Alias: Outside Snowpeak Ruins -> Snowpeak Ruins West Door
+    Stage: 27
+    Room: 0
+    Spawn: 1
+    Spawn Type: "A0"
+    Parameters: "F01F"
+    State: -1
+    Boss Entrance: Snowpeak Ruins West Courtyard North Balcony -> Snowpeak Ruins Boss Room
+  Return:
+    Connection: Snowpeak Ruins West Door Interior -> Snowpeak Ruins West Door Exterior
+    Alias: Snowpeak Ruins West Door -> Outside Snowpeak Ruins
+    Stage: 51
+    Room: 1
+    Spawn: 9
+    Spawn Type: "0B"
+    Parameters: "F01F"
+    State: -1
+  Extra Override Data:
+    Ooccoo:
+      Stage: 51
+      Room: 1
+      Spawn: 13
+      Spawn Type: "0C"
+      Parameters: ""
+      State: -1
+
+# If both dungeon entrances are randomized, and double doors are decoupled, don't assign
+# the Snowpeak entrances a boss entrance as the boss warp now leads to the beginning of the
+# dungeon instead of outside it
+- Type: Dungeon
+  Entrance Couple Tag: Snowpeak Ruins Entrance
+  Only If: Randomize_Dungeon_Entrances == On and Decouple_Double_Door_Entrances == On
   Forward:
     Connection: Snowpeak Ruins East Door Exterior -> Snowpeak Ruins East Door Interior
     Alias: Outside Snowpeak Ruins -> Snowpeak Ruins East Door
@@ -298,16 +380,18 @@
     Spawn Type: "0B"
     Parameters: "F01F"
     State: -1
-  Ooccoo:
-    Stage: 51
-    Room: 1
-    Spawn: 13
-    Spawn Type: "0C"
-    Parameters: ""
-    State: -1
+  Extra Override Data:
+    Ooccoo:
+      Stage: 51
+      Room: 1
+      Spawn: 13
+      Spawn Type: "0C"
+      Parameters: ""
+      State: -1
 
 - Type: Dungeon
   Entrance Couple Tag: Snowpeak Ruins Entrance
+  Only If: Randomize_Dungeon_Entrances == On and Decouple_Double_Door_Entrances == On
   Forward:
     Connection: Snowpeak Ruins West Door Exterior -> Snowpeak Ruins West Door Interior
     Alias: Outside Snowpeak Ruins -> Snowpeak Ruins West Door
@@ -326,13 +410,14 @@
     Spawn Type: "0B"
     Parameters: "F01F"
     State: -1
-  Ooccoo:
-    Stage: 51
-    Room: 1
-    Spawn: 13
-    Spawn Type: "0C"
-    Parameters: ""
-    State: -1
+  Extra Override Data:
+    Ooccoo:
+      Stage: 51
+      Room: 1
+      Spawn: 13
+      Spawn Type: "0C"
+      Parameters: ""
+      State: -1
 
 - Type: Dungeon
   Forward:
@@ -344,6 +429,7 @@
     Spawn Type: "50"
     Parameters: "F01F"
     State: -1
+    Boss Entrance: Temple of Time Crumbling Corridor Near Boss Door -> Temple of Time Boss Room
   Return:
     Connection: Temple of Time Entrance -> Sacred Grove Past Behind Window
     Alias: Temple of Time -> Sacred Grove Past
@@ -353,13 +439,14 @@
     Spawn Type: "50"
     Parameters: "F01F"
     State: -1
-  Ooccoo:
-    Stage: 54
-    Room: 1
-    Spawn: 100
-    Spawn Type: "0C"
-    Parameters: ""
-    State: -1
+  Extra Override Data:
+    Ooccoo:
+      Stage: 54
+      Room: 1
+      Spawn: 100
+      Spawn Type: "0C"
+      Parameters: ""
+      State: -1
 
 - Type: Dungeon
   Forward:
@@ -435,6 +522,8 @@
     Spawn Type: "60"
     Parameters: "F01F"
     State: -1
+    Dungeon Stage Returns:
+      - 7
   Return:
     Connection: Forest Temple Boss Room -> South Faron Woods
     Alias: Forest Temple Boss Room -> Faron Woods
@@ -444,6 +533,14 @@
     Spawn Type: ""
     Parameters: ""
     State: -1
+  Extra Override Data:
+    Boss Death:
+      Stage: 6
+      Room: 12
+      Spawn: 1
+      Spawn Type: "05"
+      Parameters: ""
+      State: -1
 
 - Type: Boss
   Forward:
@@ -455,6 +552,8 @@
     Spawn Type: "60"
     Parameters: "F01F"
     State: -1
+    Dungeon Stage Returns:
+      - 4
   Return:
     Connection: Goron Mines Boss Room -> Lower Kakariko Village
     Alias: Goron Mines Boss Room -> Kakariko Village
@@ -464,6 +563,14 @@
     Spawn Type: ""
     Parameters: ""
     State: -1
+  Extra Override Data:
+    Boss Death:
+      Stage: 3
+      Room: 12
+      Spawn: 1
+      Spawn Type: "05"
+      Parameters: ""
+      State: -1
 
 - Type: Boss
   Forward:
@@ -475,6 +582,8 @@
     Spawn Type: "00"
     Parameters: "F01F"
     State: -1
+    Dungeon Stage Returns:
+      - 1
   Return:
     Connection: Lakebed Temple Boss Room -> Lake Hylia Lanayru Spring
     Alias: Lakebed Temple Boss Room -> Lanayru Spring
@@ -484,6 +593,14 @@
     Spawn Type: ""
     Parameters: ""
     State: -1
+  Extra Override Data:
+    Boss Death:
+      Stage: 0
+      Room: 3
+      Spawn: 1
+      Spawn Type: "05"
+      Parameters: ""
+      State: -1
 
 - Type: Boss
   Forward:
@@ -497,6 +614,8 @@
     State: -1
     Follower Entrances:
       - Mirror Chamber Lower -> Arbiters Grounds Boss Room
+    Dungeon Stage Returns:
+      - 25
   Return:
     Connection: Arbiters Grounds Boss Room -> Mirror Chamber Lower
     Alias: Arbiters Grounds Boss Room -> Mirror Chamber
@@ -506,6 +625,14 @@
     Spawn Type: "10"
     Parameters: "501F"
     State: -1
+  Extra Override Data:
+    Boss Death:
+      Stage: 24
+      Room: 9
+      Spawn: 1
+      Spawn Type: "05"
+      Parameters: ""
+      State: -1
 
 # Define data for Mirror Chamber Lower -> Arbiters Grounds Boss Room so that it can follow
 # Arbiters Grounds -> Arbiters Grounds Boss Room
@@ -520,7 +647,10 @@
     Parameters: "501F"
     State: -1
 
+# If either dungeon entrances aren't randomized, or double doors aren't decoupled, define
+# the data for the Snowpeak Boss room entrances normally
 - Type: Boss
+  Only If: Randomize_Dungeon_Entrances != On or Decouple_Double_Door_Entrances != On
   Forward:
     Connection: Snowpeak Ruins West Courtyard North Balcony -> Snowpeak Ruins Boss Room
     Alias: Snowpeak Ruins -> Snowpeak Ruins Boss Room
@@ -530,6 +660,8 @@
     Spawn Type: "60"
     Parameters: "F01F"
     State: -1
+    Dungeon Stage Returns:
+      - 28
   Return:
     Connection: Snowpeak Ruins Boss Room -> Snowpeak Summit Lower
     Alias: Snowpeak Ruins Boss Room -> Outside Snowpeak Ruins
@@ -539,6 +671,46 @@
     Spawn Type: ""
     Parameters: ""
     State: -1
+  Extra Override Data:
+    Boss Death:
+      Stage: 27
+      Room: 4
+      Spawn: 4
+      Spawn Type: "05"
+      Parameters: ""
+      State: -1
+
+# If both dungeon entrances are randomized, and double doors are decoupled, change the game info
+# for the Snowpeak boss return to spawn inside the beginning of the dungeon
+- Type: Boss
+  Only If: Randomize_Dungeon_Entrances == On and Decouple_Double_Door_Entrances == On
+  Forward:
+    Connection: Snowpeak Ruins West Courtyard North Balcony -> Snowpeak Ruins Boss Room
+    Alias: Snowpeak Ruins -> Snowpeak Ruins Boss Room
+    Stage: 28
+    Room: 50
+    Spawn: 1
+    Spawn Type: "60"
+    Parameters: "F01F"
+    State: -1
+    Dungeon Stage Returns:
+      - 28
+  Return:
+    Connection: Snowpeak Ruins Boss Room -> Snowpeak Ruins Entrance
+    Stage: 51
+    Room: 1
+    Spawn: 11
+    Spawn Type: ""
+    Parameters: ""
+    State: -1
+  Extra Override Data:
+    Boss Death:
+      Stage: 27
+      Room: 4
+      Spawn: 4
+      Spawn Type: "05"
+      Parameters: ""
+      State: -1
 
 - Type: Boss
   Forward:
@@ -550,6 +722,8 @@
     Spawn Type: "60"
     Parameters: "F01F"
     State: -1
+    Dungeon Stage Returns:
+      - 10
   Return:
     Connection: Temple of Time Boss Room -> Sacred Grove Past Behind Window
     Alias: Temple of Time Boss Room -> Sacred Grove Past
@@ -559,6 +733,14 @@
     Spawn Type: ""
     Parameters: ""
     State: -1
+  Extra Override Data:
+    Boss Death:
+      Stage: 9
+      Room: 8
+      Spawn: 2
+      Spawn Type: "05"
+      Parameters: ""
+      State: -1
 
 - Type: Boss
   Forward:
@@ -570,6 +752,8 @@
     Spawn Type: "60"
     Parameters: "F01F"
     State: -1
+    Dungeon Stage Returns:
+      - 13
   Return:
     Connection: City in the Sky Boss Room -> City in the Sky Entrance
     Stage: 12
@@ -578,6 +762,14 @@
     Spawn Type: ""
     Parameters: ""
     State: -1
+  Extra Override Data:
+    Boss Death:
+      Stage: 12
+      Room: 15
+      Spawn: 4
+      Spawn Type: "05"
+      Parameters: ""
+      State: -1
 
 - Type: Boss
   Forward:
@@ -589,6 +781,9 @@
     Spawn Type: "60"
     Parameters: "F01F"
     State: -1
+    Dungeon Stage Returns:
+      - 16
+      - 19
   Return:
     Connection: Palace of Twilight Boss Room -> Palace of Twilight Entrance
     Stage: 15
@@ -597,6 +792,15 @@
     Spawn Type: ""
     Parameters: ""
     State: -1
+  Extra Override Data:
+    # Custom spawn for when dying at a boss randomized as the palace of twilight boss
+    Boss Death:
+      Stage: 15
+      Room: 9
+      Spawn: 5000
+      Spawn Type: "05"
+      Parameters: ""
+      State: -1
 
 ###############################
 #          GROTTOS            #

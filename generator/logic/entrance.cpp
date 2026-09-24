@@ -244,7 +244,7 @@ namespace randomizer::logic::entrance
         return this->_decoupled;
     }
 
-    void Entrance::SetDisbled(const bool& disabled)
+    void Entrance::SetDisabled(const bool& disabled)
     {
         this->_disabled = disabled;
         LOG_TO_DEBUG(this->GetOriginalName() + " disabled status set to " + (disabled ? "True" : "False"));
@@ -385,6 +385,13 @@ namespace randomizer::logic::entrance
         return {parentAreaName, connectedAreaName};
     }
 
+    void Entrance::SetDungeonStageReturns(const YAML::Node& node) {
+        for (const auto& stageNode : node) {
+            auto stageId = stageNode.as<int>();
+            this->_dungeonStageReturns.insert(stageId);
+        }
+    }
+
     void Entrance::SetGameInfo(const YAML::Node& node) {
         SetStageId(node["Stage"].as<uint8_t>());
         SetRoomNo(node["Room"].as<int8_t>());
@@ -392,10 +399,10 @@ namespace randomizer::logic::entrance
         SetLayerNo(node["State"].as<int8_t>());
     }
 
-    void Entrance::SetOoccooInfo(const YAML::Node& node) {
-        this->_ooccoo._stageId = node["Stage"].as<uint8_t>();
-        this->_ooccoo._roomNo = node["Room"].as<int8_t>();
-        this->_ooccoo._layerNo = node["State"].as<int8_t>();
-        this->_ooccoo._pointNo = node["Spawn"].as<int16_t>();
+    void Entrance::SetExtraOverrideInfo(const std::string& name, const YAML::Node& node) {
+        this->_extraOverrideData[name].stageId = node["Stage"].as<uint8_t>();
+        this->_extraOverrideData[name].roomNo = node["Room"].as<int8_t>();
+        this->_extraOverrideData[name].layerNo = node["State"].as<int8_t>();
+        this->_extraOverrideData[name].pointNo = node["Spawn"].as<int16_t>();
     }
 } // namespace randomizer::logic::entrance

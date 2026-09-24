@@ -252,6 +252,26 @@ D_MN08:
       layers:
         - 14
 
+  # Room 9 - Boss Door Room
+  9:
+    # Add entrance as if player died to the Zant
+    # This will be used as the respawn point for dying
+    # to bosses other than Zant if they're randomized to be the Palace Boss
+    - action: add
+      name: Link
+      parameters: 0xFF00503F
+      position:
+        x: 0.0
+        y: 1900.0
+        z: -9000.0
+      angle:
+        x: 0
+        y: 0x8000
+        z: 0x1388
+      set id: 0xFFFF
+      layers:
+        - 14
+
 # Hyrule Castle
 D_MN09:
   # Room 11 - Entrance Courtyard Area
@@ -2636,7 +2656,7 @@ F_SP118:
       layers:
         - 0
 
-    # Add hint sign before jump down to lower desert
+    # Add hint sign at the back of bulblin camp
     - action: add
       name: Obj_kn2
       parameters: 0xFFFFFFFF
@@ -2652,6 +2672,29 @@ F_SP118:
       set id: 0xFFFF
       layers:
         - 0
+
+    # Move the entrance from outside arbiters -> bublin camp forward
+    # incase randomized entrances lead here. Otherwise, the player gets
+    # stuck behind the fences
+    - action: patch
+      name: Link
+      parameters: 0xFF00503F
+      position:
+        x: 1813.63732910156
+        y: 0.0
+        z: -3701.73046875
+      angle:
+        x: 0x0000
+        y: 0x0000
+        z: 0x0002
+      set id: 0xFFFF
+      patch:
+        position:
+          x: 1813.63732910156
+          y: 0.0
+          z: -1200.0
+      layers:
+        - 0 # The fences only exist on layer 0
 
 # Hyrule Field
 F_SP121:

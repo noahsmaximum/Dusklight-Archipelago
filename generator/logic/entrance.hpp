@@ -67,6 +67,13 @@ namespace randomizer::logic::entrance
 
     Type TypeToReverse(const Type& type);
 
+    struct EntranceData {
+        uint8_t stageId = 0xFF;
+        int8_t roomNo = -1;
+        int8_t layerNo = -1;
+        int16_t pointNo = -1;
+    };
+
     class Entrance
     {
        public:
@@ -105,7 +112,7 @@ namespace randomizer::logic::entrance
         bool IsShuffled() const;
         void SetDecoupled(const bool& decoupled);
         bool IsDecoupled() const;
-        void SetDisbled(const bool& disabled);
+        void SetDisabled(const bool& disabled);
         bool IsDisabled() const;
         void SetPrimary(const bool& primary);
         bool IsPrimary() const;
@@ -151,22 +158,27 @@ namespace randomizer::logic::entrance
          */
         Entrance* AssumeReachable();
 
-        void SetStageId(uint8_t stageId) { _stageId = stageId; }
-        void SetRoomNo(int8_t roomNo) { _roomNo = roomNo; }
-        void SetLayerNo(int8_t layerNo) { _layerNo = layerNo; }
-        void SetPointNo(int16_t pointNo) { _pointNo = pointNo; }
-        uint8_t GetStageId() const { return _stageId; }
-        int8_t GetRoomNo() const { return _roomNo; }
-        int8_t GetLayerNo() const { return _layerNo; }
-        int16_t GetPointNo() const { return _pointNo; }
-        const auto& GetOoccoo() const { return _ooccoo; }
-        bool HasOoccoo() const {return _ooccoo._stageId != 0xFF;}
+        void SetStageId(uint8_t stageId) { _data.stageId = stageId; }
+        void SetRoomNo(int8_t roomNo) { _data.roomNo = roomNo; }
+        void SetLayerNo(int8_t layerNo) { _data.layerNo = layerNo; }
+        void SetPointNo(int16_t pointNo) { _data.pointNo = pointNo; }
+        uint8_t GetStageId() const { return _data.stageId; }
+        int8_t GetRoomNo() const { return _data.roomNo; }
+        int8_t GetLayerNo() const { return _data.layerNo; }
+        int16_t GetPointNo() const { return _data.pointNo; }
+        const auto& GetExtraOverrideData() const { return _extraOverrideData; }
+        bool HasExtraOverrideData() const {return !_extraOverrideData.empty();}
+        bool HasExtraOverrideData(const std::string& name) const { return _extraOverrideData.contains(name); }
+        const auto& GetDungeonStageReturns() const { return _dungeonStageReturns; }
+        void SetDungeonStageReturns(const YAML::Node& node);
         void SetGameInfo(const YAML::Node& node);
-        void SetOoccooInfo(const YAML::Node& node);
+        void SetExtraOverrideInfo(const std::string& name, const YAML::Node& node);
         void SetCoupledEntrances(const std::vector<int16_t>& entrances) { _coupledEntrances = entrances; }
         const std::vector<int16_t>& GetCoupledEntrances() const { return _coupledEntrances; }
         void SetFollowerEntrances(const YAML::Node& followerList);
         const std::list<Entrance*>& GetFollowerEntrances() const { return _followerEntrances; }
+        void SetBossEntrance(Entrance* bossEntrance) {_bossEntrance = bossEntrance;}
+        Entrance* GetBossEntrance() const {return _bossEntrance;};
 
        private:
         int _id = -1;
@@ -179,17 +191,9 @@ namespace randomizer::logic::entrance
         std::string _alias = "";
         world::World* _world = nullptr;
 
-        uint8_t _stageId = 0xFF;
-        int8_t _roomNo = -1;
-        int8_t _layerNo = -1;
-        int16_t _pointNo = -1;
-
-        struct {
-            uint8_t _stageId = 0xFF;
-            int8_t _roomNo = -1;
-            int8_t _layerNo = -1;
-            int16_t _pointNo = -1;
-        } _ooccoo;
+        EntranceData _data{};
+        std::map<std::string, EntranceData> _extraOverrideData{};
+        std::set<int> _dungeonStageReturns{};
 
         /**
          * @brief The local requirement for this entrance assuming we have access to its parent area.
@@ -209,8 +213,8 @@ namespace randomizer::logic::entrance
         bool _disabled = false;
 
         // A target entrance is one created to mimic the effect of going 
-        // through a specific real entrance. The target is attatched to
-        // the root of the world graph and is connected to it's correpsonding
+        // through a specific real entrance. The target is attached to
+        // the root of the world graph and is connected to it's corresponding
         // entrance's connected area.
         bool _target = false;
 
@@ -240,10 +244,23 @@ namespace randomizer::logic::entrance
 
         // Entrances that are to follow where this one leads if it's randomized
         std::list<Entrance*> _followerEntrances = {};
+
+        // Boss entrance associated with this dungeon entrance. If this dungeon entrance is
+        // shuffled, we need to update where the boss return points to
+        Entrance* _bossEntrance = nullptr;
     };
 
     using EntrancePool = std::vector<Entrance*>;
     using EntrancePools = std::map<Type, EntrancePool>;
 
     std::tuple<std::string, std::string> GetParentAndConnectedAreaNames(const std::string& originalName);
+
+    struct PointerTypeCompare {
+        bool operator()(const Entrance* a, const Entrance* b) const {
+            if (a->GetType() == b->GetType()) {
+                return a->GetOriginalName() < b->GetOriginalName();
+            }
+            return a->GetType() < b->GetType();
+        }
+    };
 } // namespace randomizer::logic::entrance
