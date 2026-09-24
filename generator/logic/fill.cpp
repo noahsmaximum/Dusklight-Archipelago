@@ -539,7 +539,11 @@ namespace randomizer::logic::fill
 
     void CacheExitTimeForms(world::WorldPool& worlds)
     {
-        auto completeItemPool = item_pool::GetCompleteItemPool(worlds);
+        CacheExitTimeForms(worlds, item_pool::GetCompleteItemPool(worlds));
+    }
+
+    void CacheExitTimeForms(world::WorldPool& worlds, const item_pool::ItemPool& completeItemPool)
+    {
         auto searchWithItems = search::Search::AllLocationsReachable(&worlds, completeItemPool);
         searchWithItems.SearchWorlds();
 

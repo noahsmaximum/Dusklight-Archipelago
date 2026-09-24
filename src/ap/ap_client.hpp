@@ -93,4 +93,8 @@ private:
 // the names the server gave us (item/location names come in the text for our game via slot data).
 std::string flatten_print(const json& data, const Client& client);
 
+// The same message as RML for the Archipelago window: every part escaped and bounded, players,
+// items (by importance), locations and entrances wrapped in spans with ap-* classes.
+std::string print_rml(const json& data, const Client& client);
+
 }  // namespace ap

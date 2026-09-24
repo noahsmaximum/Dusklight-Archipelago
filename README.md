@@ -80,6 +80,22 @@ it's over.
 You can switch it on or off for a save from the **Archipelago** tab in the menu bar (F1),
 whatever the YAML said.
 
+### Tracker and messages
+
+The **Archipelago** tab in the menu bar (F1) has two more pages for use mid-run:
+
+- **Tracker** shows how many of your checks are done and which ones you can do right now. It
+  opens on everything in logic; pick a region to see all of its checks. A green dot is in
+  logic, a hollow dot isn't yet, and gray, crossed-out text is done. The logic is the seed's
+  own, worked out in the background from the items you have, so "in logic" means the same
+  thing it means to Archipelago.
+- **Messages** is everything the room says, newest first, in Archipelago's usual colors: items
+  found and sent, hints, chat. Type in the Message box to chat, or send a server command such as
+  `!hint Clawshot` or `!remaining`.
+
+The tracker needs the save to have connected to its room, which it does by itself when you load
+it.
+
 ## Presets
 
 `presets/` holds seven ready-made YAMLs, each verified to generate and to rebuild exactly in

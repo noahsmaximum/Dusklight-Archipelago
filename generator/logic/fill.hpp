@@ -69,4 +69,7 @@ namespace randomizer::logic::fill
      *  @param worlds The worlds to calculate and cache the possible timeforms for
      */
     void CacheExitTimeForms(world::WorldPool& worlds);
+    // Same, with the items the caching search may assume (the Archipelago tracker's world has
+    // an empty item pool: every item is already placed, or in another game).
+    void CacheExitTimeForms(world::WorldPool& worlds, const item_pool::ItemPool& completeItemPool);
 } // namespace randomizer::logic::fill

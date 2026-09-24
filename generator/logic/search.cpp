@@ -256,7 +256,7 @@ namespace randomizer::logic::search
     {
         // Don't return if we aren't collecting items, or if we're doing an importance search
         // and the item at this location is a similar item to our importance location
-        if (!this->_collectItems ||
+        if (!this->_collectItems || (this->_collectFilter && !this->_collectFilter(location)) ||
               (this->_searchMode == SearchMode::LOCATION_IMPORTANCE &&
               this->_importanceLocation->GetCurrentItem()->IsSameOrSimilarItem(location->GetCurrentItem())))
         {

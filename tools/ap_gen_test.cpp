@@ -1,8 +1,15 @@
 // Offline check of the in-game seed rebuild: slot_data.json -> official generator (AP mode).
-// usage: ap_gen_test <slot_data.json> <work dir>
+// usage: ap_gen_test <slot_data.json> <work dir> [--tracker <stages.json> <out.json>]
+//
+// --tracker also builds the in-game tracker's logic (src/ap/ap_tracker.cpp) from the work dir
+// and answers each stage of stages.json: {"stages": [{"received": [item ids], "checked":
+// [location names]}, ...]} -> out.json {"build_ms": n, "stages": [{"reachable": [...], "ms": n}]}.
 #include "../generator/randomizer.hpp"
 #include "../generator/logic/world.hpp"
+#include "../src/ap/ap_tracker.hpp"
 #include "../src/ap/data_version.hpp"
+
+#include <chrono>
 
 #include <string_view>
 
@@ -21,7 +28,7 @@ int main(int argc, char** argv) {
         return 0;
     }
     if (argc < 3) {
-        std::cerr << "usage: ap_gen_test <slot_data.json> <work dir>\n"
+        std::cerr << "usage: ap_gen_test <slot_data.json> <work dir> [--tracker <stages> <out>]\n"
                      "       ap_gen_test --data-version\n";
         return 2;
     }
@@ -68,5 +75,40 @@ int main(int argc, char** argv) {
     for (auto* l : world->GetAllLocations()) if (l->IsEmpty()) ++empty;
     std::cout << "hash " << r.GetConfig().GetHash() << " placements ok " << ok << " bad " << bad
               << " empty locations " << empty << "\n";
-    return bad == 0 && empty == 0 ? 0 : 1;
+    if (bad != 0 || empty != 0) {
+        return 1;
+    }
+    if (argc >= 6 && std::string_view{argv[3]} == "--tracker") {
+        using clock = std::chrono::steady_clock;
+        auto ms = [](clock::time_point t) {
+            return std::chrono::duration<double, std::milli>(clock::now() - t).count();
+        };
+        randomizer::g_archipelagoMode = false;
+        auto t0 = clock::now();
+        std::string error;
+        auto logic = ap::tracker::Logic::build(base, error);
+        if (!logic) {
+            std::cout << "TRACKER BUILD FAILED: " << error << "\n";
+            return 1;
+        }
+        nlohmann::json out{{"build_ms", ms(t0)}, {"stages", nlohmann::json::array()}};
+        std::unordered_set<std::string> checks;
+        for (const auto& [name, id] : sd["location_ids"].items()) checks.insert(name);
+        std::vector<std::string> unshuffled = sd.contains("unshuffled_dungeons")
+            ? sd["unshuffled_dungeons"].get<std::vector<std::string>>()
+            : logic->guess_unshuffled(checks);
+        auto query = nlohmann::json::parse(std::ifstream(argv[4]));
+        for (const auto& stage : query["stages"]) {
+            std::vector<uint16_t> received = stage.value("received", std::vector<uint16_t>{});
+            std::unordered_set<std::string> checked;
+            for (const auto& n : stage.value("checked", nlohmann::json::array())) checked.insert(n);
+            auto t = clock::now();
+            auto reach = logic->reachable(received, checks, checked, unshuffled);
+            out["stages"].push_back({{"reachable", reach}, {"ms", ms(t)}});
+        }
+        std::ofstream(argv[5]) << out.dump();
+        std::cout << "tracker build " << out["build_ms"].get<double>() << " ms, "
+                  << out["stages"].size() << " stages" << "\n";
+    }
+    return 0;
 }

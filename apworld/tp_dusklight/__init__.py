@@ -609,6 +609,9 @@ class TPWorld(World):
             "location_ids": location_ids,
             "item_id_base": data.ITEM_ID_BASE,
             "death_link": bool(self.options.death_link.value),
+            # For the in-game tracker's logic, which holds these dungeons' keys the way
+            # create_regions does ("held").
+            "unshuffled_dungeons": sorted(self._vanilla_dungeons),
         }
 
     def write_spoiler_header(self, spoiler_handle) -> None:

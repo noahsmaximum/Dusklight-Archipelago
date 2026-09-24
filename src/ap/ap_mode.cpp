@@ -1,6 +1,7 @@
 #include "ap_mode.hpp"
 
 #include "ap_client.hpp"
+#include "ap_tracker.hpp"
 #include "data_version.hpp"
 #include "text_safe.hpp"
 
@@ -38,10 +39,12 @@
 #include <atomic>
 #include <cmath>
 #include <cstring>
+#include <deque>
 #include <filesystem>
 #include <chrono>
 #include <cstdio>
 #include <fstream>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <thread>
@@ -156,6 +159,32 @@ double g_lastDeathTime = 0.0;   // time on the death we sent, to recognise its e
 int g_killFrames = 0;           // > 0: a death now is the one we were sent, not a new one
 std::optional<std::string> g_pendingDeath;
 
+// Tracker (see "Tracker" below; the logic itself is in ap_tracker.cpp)
+struct TrackerCheck {
+    std::string name;
+    int64_t id = 0;
+    int region = 0;  // index into tracker_regions()
+};
+std::vector<TrackerCheck> g_trackerChecks;  // this slot's checks, in locations.yaml order
+std::vector<std::string> g_unshuffled;      // slot_data "unshuffled_dungeons"
+bool g_unshuffledKnown = false;             // slot data from before 1.6.0 doesn't say
+std::shared_ptr<tracker::Logic> g_logic;
+std::string g_logicKey;                     // seed-slot the logic is for (or being built for)
+bool g_logicBuilding = false;
+std::string g_logicError;
+std::unordered_set<std::string> g_inLogic;  // reachable checks, done or not
+size_t g_reachInputs = SIZE_MAX;            // the inputs g_inLogic (or the search running) is for
+bool g_reachBusy = false;
+uint64_t g_trackerEpoch = 0;                // bumped on reset: late worker results are dropped
+uint64_t g_trackerVersion = 1;              // bumped whenever what the tracker shows changes
+void reset_tracker();
+
+// Message log (the Messages tab)
+constexpr size_t kLogLines = 200;
+std::deque<std::string> g_log;              // RML, oldest first
+uint64_t g_logVersion = 1;
+std::string g_chatDraft;
+
 // Config
 ConfigVarHandle g_cfgServer = 0;
 ConfigVarHandle g_cfgSlot = 0;
@@ -207,19 +236,6 @@ const std::string& item_name(int id) {
     return it != g_itemNames.end() ? it->second : unknown;
 }
 
-std::string rml_escape(std::string_view in) {
-    std::string out;
-    for (char c : in) {
-        switch (c) {
-        case '<': out += "&lt;"; break;
-        case '>': out += "&gt;"; break;
-        case '&': out += "&amp;"; break;
-        default: out += c;
-        }
-    }
-    return out;
-}
-
 void toast(const std::string& title, const std::string& body, const char* type = nullptr,
     uint32_t ms = 0) {
     // Server chat and refusal messages land here, so bound what we are willing to render.
@@ -231,6 +247,15 @@ void toast(const std::string& title, const std::string& body, const char* type =
     desc.body_rml = b.c_str();
     desc.duration_ms = ms;
     svc_mng.ui->push_toast(svc_mng.mod_ctx, &desc);
+}
+
+// One line of the Messages tab; `rml` must already be escaped.
+void log_rml(std::string rml) {
+    g_log.push_back(std::move(rml));
+    while (g_log.size() > kLogLines) {
+        g_log.pop_front();
+    }
+    ++g_logVersion;
 }
 
 std::string config_string(ConfigVarHandle var) {
@@ -309,10 +334,69 @@ std::string status_line() {
 // ---------------------------------------------------------------------------------------
 // Slot data -> lookup tables
 
+struct TrackerRegion {
+    const char* label;
+    std::vector<std::string> categories;
+    bool dungeon;
+};
+
+// The randomizer tracker's own groups (src/ui/rando_config.cpp), plus "Other".
+const std::vector<TrackerRegion>& tracker_regions() {
+    static const std::vector<TrackerRegion> regions = {
+        {"Ordon", {"Ordona Province"}, false},
+        {"Faron", {"Faron Province", "Faron Woods", "Hyrule Field - Faron Province", "Sacred Grove"},
+            false},
+        {"Eldin", {"Eldin Province", "Hyrule Field - Eldin", "Hyrule Field - Eldin Province",
+                      "Eldin Lantern Cave", "Eldin Stockcave", "Death Mountain", "Kakariko Village",
+                      "Kakariko Graveyard"},
+            false},
+        {"Lanayru", {"Lanayru Province", "Hyrule Field - Lanayru", "Hyrule Field - Lanayru Province",
+                        "Castle Town", "Fishing Hole", "Lake Hylia", "Lake Lantern Cave",
+                        "Upper Zoras River", "Zoras Domain"},
+            false},
+        {"Gerudo Desert", {"Gerudo Desert", "Bulblin Camp", "Mirror Chamber", "Cave Of Ordeals"}, false},
+        {"Snowpeak", {"Snowpeak Province", "Snowpeak"}, false},
+        {"Forest Temple", {"Forest Temple"}, true},
+        {"Goron Mines", {"Goron Mines"}, true},
+        {"Lakebed Temple", {"Lakebed Temple"}, true},
+        {"Arbiter's Grounds", {"Arbiters Grounds"}, true},
+        {"Snowpeak Ruins", {"Snowpeak Ruins"}, true},
+        {"Temple of Time", {"Temple of Time"}, true},
+        {"City in the Sky", {"City in the Sky"}, true},
+        {"Palace of Twilight", {"Palace of Twilight"}, true},
+        {"Hyrule Castle", {"Hyrule Castle"}, true},
+        {"Other", {}, false},
+    };
+    return regions;
+}
+
+// Dungeons first, so a dungeon's checks never land in the province around it.
+int region_of(const YAML::Node& categories) {
+    const auto& regions = tracker_regions();
+    auto has = [&](const std::string& c) {
+        for (const auto& n : categories) {
+            if (n.as<std::string>() == c) {
+                return true;
+            }
+        }
+        return false;
+    };
+    for (const bool dungeons : {true, false}) {
+        for (size_t i = 0; i < regions.size(); ++i) {
+            if (regions[i].dungeon == dungeons &&
+                std::ranges::any_of(regions[i].categories, has)) {
+                return static_cast<int>(i);
+            }
+        }
+    }
+    return static_cast<int>(regions.size()) - 1;
+}
+
 void build_check_map() {
     g_checkToLocations.clear();
     g_scan.clear();
     g_scanPos = 0;
+    g_trackerChecks.clear();
     const auto locations = LOAD_EMBED_YAML(RANDO_DATA_PATH "locations.yaml");
     auto add = [](const std::string& check, const std::string& loc) {
         g_checkToLocations[check].push_back(loc);
@@ -325,6 +409,7 @@ void build_check_map() {
         }
         const YAML::Node meta = node["Metadata"];
         g_scan.push_back({name, idIt->second, meta});
+        g_trackerChecks.push_back({name, idIt->second, region_of(node["Categories"])});
         if (!meta.IsMap()) {
             continue;
         }
@@ -418,7 +503,16 @@ bool load_slot_data(const json& slotData, std::string& err) {
     }
     g_slotSeed = slotData.value("seed", "");
     build_check_map();
+    g_unshuffled.clear();
+    g_unshuffledKnown = slotData.contains("unshuffled_dungeons");
+    for (const auto& d : slotData.value("unshuffled_dungeons", json::array())) {
+        if (d.is_string()) {
+            g_unshuffled.push_back(d.get<std::string>());
+        }
+    }
     g_haveSlot = true;
+    g_reachInputs = SIZE_MAX;
+    ++g_trackerVersion;
     return true;
 }
 
@@ -434,13 +528,18 @@ std::string sanitize(std::string s) {
     return s;
 }
 
+// Where a seed's settings and plando live; the tracker rebuilds its logic from the same files.
+std::filesystem::path seed_base(const std::string& seedName, const std::string& slot) {
+    return randomizer::paths::GetRandomizerPath() / "archipelago" / sanitize(seedName + "-" + slot);
+}
+
 bool generate_seed(const json& slotData, const std::string& slot, std::string& outHash,
     std::string& outError) {
     namespace fs = std::filesystem;
+    std::lock_guard lock{tracker::g_generatorMutex};
     try {
         const std::string seedName = slotData.value("seed", "");
-        const fs::path base =
-            randomizer::paths::GetRandomizerPath() / "archipelago" / sanitize(seedName + "-" + slot);
+        const fs::path base = seed_base(seedName, slot);
         fs::create_directories(base);
 
         YAML::Node settings;
@@ -541,6 +640,8 @@ void on_connected(const json& p) {
     for (const auto& id : p.value("checked_locations", json::array())) {
         g_checked.insert(id.get<int64_t>());
     }
+    g_reachInputs = SIZE_MAX;
+    ++g_trackerVersion;
 
     ap_log(fmt::format("connected in phase {}: {} locations, {} ap placements",
         static_cast<int>(g_phase), g_locationIds.size(), g_apItemText.size()));
@@ -584,6 +685,7 @@ void on_items(int index, const std::vector<NetworkItem>& items) {
 }
 
 void on_print(const std::string& text, const json& msg) {
+    log_rml(print_rml(msg.value("data", json::array()), g_client));
     const std::string type = msg.value("type", "");
     const int me = g_client.slot();
     if (type == "ItemSend" || type == "ItemCheat") {
@@ -603,6 +705,8 @@ void on_print(const std::string& text, const json& msg) {
 }
 
 void on_disconnected(const std::string& reason) {
+    log_rml("<span class=\"ap-quiet\">" + rml_escape(message_safe("Disconnected: " + reason, 300)) +
+            "</span>");
     if (g_phase == Phase::NewSave || g_phase == Phase::Generating) {
         g_status = "Could not connect: " + reason;
     } else if (g_phase == Phase::Playing) {
@@ -1241,6 +1345,407 @@ ModResult on_save_loaded(void* ud, ModError* err) {
 ModResult on_game_reset(void*, ModError*) {
     g_phase = Phase::Idle;
     g_outstanding = -1;
+    reset_tracker();
+    return MOD_OK;
+}
+
+// ---------------------------------------------------------------------------------------
+// Tracker
+//
+// The seed's world is rebuilt once per save on a worker thread (ap_tracker.cpp), from the same
+// files the seed was generated from, then asked "which checks can I reach?" on another worker
+// whenever items or checks change. The game thread only hands inputs over and takes results.
+
+struct WorkerResults {
+    std::mutex mutex;
+    uint64_t epoch = 0;  // results are kept only while this matches the worker's
+    bool logicDone = false;
+    std::shared_ptr<tracker::Logic> logic;
+    std::string logicError;
+    bool reachDone = false;
+    std::unordered_set<std::string> reach;
+};
+WorkerResults g_workers;
+
+void reset_tracker() {
+    ++g_trackerEpoch;
+    {
+        std::lock_guard lock{g_workers.mutex};
+        g_workers.epoch = g_trackerEpoch;
+        g_workers.logicDone = g_workers.reachDone = false;
+        g_workers.logic.reset();
+        g_workers.reach.clear();
+    }
+    g_logic.reset();
+    g_logicKey.clear();
+    g_logicBuilding = false;
+    g_logicError.clear();
+    g_inLogic.clear();
+    g_reachInputs = SIZE_MAX;
+    g_reachBusy = false;
+    ++g_trackerVersion;
+}
+
+void start_logic_build(const std::filesystem::path& base) {
+    g_logicBuilding = true;
+    const uint64_t epoch = g_trackerEpoch;
+    std::thread([base, epoch] {
+        std::string error;
+        std::shared_ptr<tracker::Logic> logic = tracker::Logic::build(base, error);
+        std::lock_guard lock{g_workers.mutex};
+        if (epoch == g_workers.epoch) {
+            g_workers.logic = std::move(logic);
+            g_workers.logicError = error.empty() ? "the seed could not be rebuilt" : error;
+            g_workers.logicDone = true;
+        }
+    }).detach();
+}
+
+void start_reach_search() {
+    std::vector<uint16_t> received;
+    for (const auto& it : g_serverItems) {
+        const int64_t id = it.item - kItemIdBase;
+        if (id >= 0 && id <= 0xFFFF) {
+            received.push_back(static_cast<uint16_t>(id));
+        }
+    }
+    std::unordered_set<std::string> checks, checked;
+    for (const auto& c : g_trackerChecks) {
+        checks.insert(c.name);
+        if (g_checked.contains(c.id)) {
+            checked.insert(c.name);
+        }
+    }
+    g_reachBusy = true;
+    std::thread([logic = g_logic, epoch = g_trackerEpoch, received = std::move(received),
+                    checks = std::move(checks), checked = std::move(checked),
+                    unshuffled = g_unshuffled, known = g_unshuffledKnown] {
+        auto reach = logic->reachable(
+            received, checks, checked, known ? unshuffled : logic->guess_unshuffled(checks));
+        std::lock_guard lock{g_workers.mutex};
+        if (epoch == g_workers.epoch) {
+            g_workers.reach = std::move(reach);
+            g_workers.reachDone = true;
+        }
+    }).detach();
+}
+
+void tick_tracker() {
+    {
+        std::lock_guard lock{g_workers.mutex};
+        if (g_workers.logicDone) {
+            g_workers.logicDone = false;
+            g_logic = std::move(g_workers.logic);
+            g_logicError = g_logic ? "" : g_workers.logicError;
+            g_logicBuilding = false;
+            g_reachInputs = SIZE_MAX;
+            ++g_trackerVersion;
+            ap_log(g_logic ? "tracker: logic ready" : "tracker: logic failed: " + g_logicError);
+        }
+        if (g_workers.reachDone) {
+            g_workers.reachDone = false;
+            g_inLogic = std::move(g_workers.reach);
+            g_reachBusy = false;
+            ++g_trackerVersion;
+        }
+    }
+    if (g_phase != Phase::Playing || g_needsRegen || g_state.seed.empty()) {
+        return;
+    }
+    const std::string key = g_state.seed + "-" + g_state.slot;
+    if (key != g_logicKey) {
+        reset_tracker();
+        g_logicKey = key;
+        const auto base = seed_base(g_state.seed, g_state.slot);
+        std::error_code ec;
+        if (std::filesystem::exists(base / "plando.yaml", ec)) {
+            start_logic_build(base);
+        } else {
+            g_logicError = "this save's seed files aren't on this computer";
+        }
+        return;
+    }
+    if (!g_logic || !g_haveSlot || g_reachBusy) {
+        return;
+    }
+    // Items only ever arrive and checks only ever get done, so the two counts say when the
+    // answer can have changed.
+    const size_t inputs = g_serverItems.size() * 100003u + g_checked.size();
+    if (inputs != g_reachInputs) {
+        g_reachInputs = inputs;
+        start_reach_search();
+    }
+}
+
+enum class CheckState { Done, InLogic, NotYet, Unknown };
+
+CheckState check_state(const TrackerCheck& c) {
+    if (g_checked.contains(c.id)) {
+        return CheckState::Done;
+    }
+    if (!g_logic || g_reachInputs == SIZE_MAX) {
+        return CheckState::Unknown;
+    }
+    return g_inLogic.contains(c.name) ? CheckState::InLogic : CheckState::NotYet;
+}
+
+struct RegionCounts {
+    size_t total = 0, done = 0, inLogic = 0;
+};
+
+RegionCounts region_counts(int region) {
+    RegionCounts n;
+    for (const auto& c : g_trackerChecks) {
+        if (region >= 0 && c.region != region) {
+            continue;
+        }
+        ++n.total;
+        const auto st = check_state(c);
+        n.done += st == CheckState::Done;
+        n.inLogic += st == CheckState::InLogic;
+    }
+    return n;
+}
+
+std::string tracker_summary() {
+    if (!g_haveSlot) {
+        return "Connect to your room to see your checks.";
+    }
+    const auto n = region_counts(-1);
+    std::string s = fmt::format("{} of {} checks done", n.done, n.total);
+    if (g_logic) {
+        s += fmt::format(", {} in logic now", n.inLogic);
+    } else if (g_logicBuilding) {
+        s += ". Working out logic...";
+    } else if (!g_logicError.empty()) {
+        s += ". Logic unavailable: " + g_logicError + ".";
+    }
+    return s;
+}
+
+std::string region_label(int region) {
+    const auto n = region_counts(region);
+    std::string label = fmt::format("{}   {}/{}", tracker_regions()[region].label, n.done, n.total);
+    if (g_logic && n.inLogic > 0) {
+        label += fmt::format("   ({} in logic)", n.inLogic);
+    }
+    return label;
+}
+
+std::string check_row(const TrackerCheck& c, CheckState st) {
+    const char* cls = st == CheckState::Done      ? "ap-done"
+                      : st == CheckState::InLogic ? "ap-in"
+                      : st == CheckState::NotYet  ? "ap-out"
+                                                  : "ap-unknown";
+    return fmt::format(R"(<div class="ap-row {}"><span class="ap-dot"></span>{}</div>)", cls,
+        rml_escape(c.name));
+}
+
+// kInLogicNow lists every check in logic under region headings; otherwise one region's checks,
+// in logic first and done last.
+constexpr int kInLogicNow = -2;
+
+std::string region_rml(int region) {
+    if (!g_haveSlot) {
+        return "";
+    }
+    std::string out;
+    if (region == kInLogicNow) {
+        if (!g_logic) {
+            return R"(<div class="ap-quiet">)" + rml_escape(tracker_summary()) + "</div>";
+        }
+        for (int r = 0; r < static_cast<int>(tracker_regions().size()); ++r) {
+            std::string rows;
+            size_t n = 0;
+            for (const auto& c : g_trackerChecks) {
+                if (c.region == r && check_state(c) == CheckState::InLogic) {
+                    rows += check_row(c, CheckState::InLogic);
+                    ++n;
+                }
+            }
+            if (n > 0) {
+                out += fmt::format(R"(<div class="ap-head">{} ({})</div>)",
+                    rml_escape(tracker_regions()[r].label), n);
+                out += rows;
+            }
+        }
+        return out.empty() ? R"(<div class="ap-quiet">Nothing in logic right now.</div>)" : out;
+    }
+    const auto& regions = tracker_regions();
+    if (region < 0 || region >= static_cast<int>(regions.size())) {
+        return "";
+    }
+    out += fmt::format(R"(<div class="ap-head">{}</div>)", rml_escape(region_label(region)));
+    for (const auto want :
+        {CheckState::InLogic, CheckState::Unknown, CheckState::NotYet, CheckState::Done}) {
+        for (const auto& c : g_trackerChecks) {
+            if (c.region == region && check_state(c) == want) {
+                out += check_row(c, want);
+            }
+        }
+    }
+    return out;
+}
+
+constexpr const char* kLegendRml =
+    R"(<div class="ap-legend"><span class="ap-in"><span class="ap-dot"></span>in logic</span>)"
+    R"(<span class="ap-out"><span class="ap-dot"></span>not yet</span>)"
+    R"(<span class="ap-done"><span class="ap-dot"></span>done</span></div>)";
+
+// The window's styles: tracker rows, and Archipelago's usual colors for the message log.
+constexpr const char* kWindowRcss = R"(
+.ap-row { display: block; padding: 3dp 0dp; }
+.ap-dot { display: inline-block; width: 10dp; height: 10dp; border-radius: 5dp; margin-right: 10dp; }
+.ap-in { color: #ffffff; }
+.ap-in .ap-dot { background-color: #6fd08c; }
+.ap-out { color: #a6a6a6; }
+.ap-out .ap-dot { border: 2dp #a6a6a6; }
+.ap-unknown { color: #d0d0d0; }
+.ap-unknown .ap-dot { border: 2dp #d0d0d0; }
+.ap-done { color: #6c6c6c; text-decoration: line-through; }
+.ap-done .ap-dot { background-color: #6c6c6c; }
+.ap-head { display: block; margin-top: 10dp; margin-bottom: 2dp; font-weight: bold; color: #e8c867; }
+.ap-legend > span { margin-right: 18dp; }
+.ap-quiet { color: #a6a6a6; }
+.ap-msg { display: block; padding: 3dp 0dp; }
+.ap-me { color: #ee00ee; }
+.ap-player { color: #fafad2; }
+.ap-prog { color: #af99ef; }
+.ap-useful { color: #6d8be8; }
+.ap-trap { color: #fa8072; }
+.ap-item { color: #00eeee; }
+.ap-loc { color: #00ff7f; }
+.ap-ent { color: #6495ed; }
+)";
+
+// Tracker tab
+UiElementHandle g_trackerSummary = 0;
+UiElementHandle g_trackerProgress = 0;
+UiElementHandle g_trackerList = 0;
+int g_trackerShownRegion = kInLogicNow;
+std::pair<uint64_t, size_t> g_trackerShown{0, 0};
+std::vector<std::pair<UiElementHandle, int>> g_trackerGroups;  // group control, region
+
+float done_fraction() {
+    const auto n = region_counts(-1);
+    return n.total == 0 ? 0.0f : static_cast<float>(n.done) / static_cast<float>(n.total);
+}
+
+ModResult build_region_pane(ModContext* ctx, UiElementHandle pane, void* ud, ModError*) {
+    g_trackerShownRegion = static_cast<int>(reinterpret_cast<intptr_t>(ud));
+    g_trackerList = 0;
+    return svc_mng.ui->pane_add_rml(
+        ctx, pane, region_rml(g_trackerShownRegion).c_str(), &g_trackerList);
+}
+
+ModResult build_tracker_tab(ModContext* ctx, UiWindowHandle, UiElementHandle left,
+    UiElementHandle right, void*, ModError*) {
+    g_trackerSummary = g_trackerProgress = g_trackerList = 0;
+    g_trackerGroups.clear();
+    svc_mng.ui->pane_add_text(ctx, left, tracker_summary().c_str(), &g_trackerSummary);
+    svc_mng.ui->pane_add_progress(ctx, left, done_fraction(), &g_trackerProgress);
+    svc_mng.ui->pane_add_rml(ctx, left, kLegendRml, nullptr);
+
+    UiGroupDesc now = UI_GROUP_DESC_INIT;
+    now.label = "In logic now";
+    now.build = build_region_pane;
+    now.user_data = reinterpret_cast<void*>(static_cast<intptr_t>(kInLogicNow));
+    svc_mng.ui->pane_add_group(ctx, left, right, &now, nullptr);
+
+    svc_mng.ui->pane_add_section(ctx, left, "Regions");
+    const auto& regions = tracker_regions();
+    for (int r = 0; r < static_cast<int>(regions.size()); ++r) {
+        if (region_counts(r).total == 0) {
+            continue;
+        }
+        const std::string label = region_label(r);
+        UiGroupDesc g = UI_GROUP_DESC_INIT;
+        g.label = label.c_str();
+        g.build = build_region_pane;
+        g.user_data = reinterpret_cast<void*>(static_cast<intptr_t>(r));
+        UiElementHandle elem = 0;
+        svc_mng.ui->pane_add_group(ctx, left, right, &g, &elem);
+        g_trackerGroups.emplace_back(elem, r);
+    }
+
+    // Open on what's in logic: the question mid-run is usually "what can I do now?".
+    g_trackerShownRegion = kInLogicNow;
+    svc_mng.ui->pane_add_rml(ctx, right, region_rml(kInLogicNow).c_str(), &g_trackerList);
+    g_trackerShown = {g_trackerVersion, g_checked.size()};
+    return MOD_OK;
+}
+
+ModResult update_tracker_tab(ModContext* ctx, void*, ModError*) {
+    const std::pair<uint64_t, size_t> now{g_trackerVersion, g_checked.size()};
+    if (now == g_trackerShown) {
+        return MOD_OK;
+    }
+    g_trackerShown = now;
+    if (g_trackerSummary != 0) {
+        svc_mng.ui->elem_set_text(ctx, g_trackerSummary, tracker_summary().c_str());
+    }
+    if (g_trackerProgress != 0) {
+        svc_mng.ui->elem_set_progress(ctx, g_trackerProgress, done_fraction());
+    }
+    for (const auto& [elem, region] : g_trackerGroups) {
+        if (elem != 0) {
+            svc_mng.ui->control_set_label(ctx, elem, region_label(region).c_str());
+        }
+    }
+    if (g_trackerList != 0) {
+        svc_mng.ui->elem_set_rml(ctx, g_trackerList, region_rml(g_trackerShownRegion).c_str());
+    }
+    return MOD_OK;
+}
+
+// Messages tab
+UiElementHandle g_logElem = 0;
+uint64_t g_logShown = 0;
+
+std::string log_rml_all() {
+    if (g_log.empty()) {
+        return R"(<div class="ap-msg ap-quiet">Nothing yet. Messages from the room show up here.</div>)";
+    }
+    std::string out;
+    for (auto it = g_log.rbegin(); it != g_log.rend(); ++it) {  // newest first
+        out += R"(<div class="ap-msg">)" + *it + "</div>";
+    }
+    return out;
+}
+
+ModResult build_messages_tab(ModContext* ctx, UiWindowHandle, UiElementHandle left,
+    UiElementHandle, void*, ModError*) {
+    UiControlDesc say = UI_CONTROL_DESC_INIT;
+    say.kind = UI_CONTROL_STRING;
+    say.label = "Message";
+    say.help_rml = "Chat with everyone in the room, or send a server command such as "
+                   "<b>!hint</b> <i>item name</i>, <b>!remaining</b> or <b>!help</b>. "
+                   "Confirm to send.";
+    say.max_length = 400;
+    say.get = get_str;
+    say.user_data = &g_chatDraft;
+    say.set = [](ModContext*, void*, const UiControlValue* v) {
+        std::string text = message_safe(v->string_value != nullptr ? v->string_value : "", 400);
+        std::erase(text, '\n');
+        const auto first = text.find_first_not_of(' ');
+        if (first != std::string::npos && g_client.state() == State::Connected) {
+            g_client.say(text.substr(first));
+        }
+        g_chatDraft.clear();
+    };
+    say.is_disabled = [](ModContext*, void*) { return g_client.state() != State::Connected; };
+    svc_mng.ui->pane_add_control(ctx, left, &say, nullptr);
+    g_logElem = 0;
+    svc_mng.ui->pane_add_rml(ctx, left, log_rml_all().c_str(), &g_logElem);
+    g_logShown = g_logVersion;
+    return MOD_OK;
+}
+
+ModResult update_messages_tab(ModContext* ctx, void*, ModError*) {
+    if (g_logElem != 0 && g_logShown != g_logVersion) {
+        g_logShown = g_logVersion;
+        svc_mng.ui->elem_set_rml(ctx, g_logElem, log_rml_all().c_str());
+    }
     return MOD_OK;
 }
 
@@ -1347,16 +1852,26 @@ ModResult update_status_tab(ModContext* ctx, void*, ModError*) {
 }
 
 void open_status_window(ModContext*, void*) {
-    static UiTabDesc tab = UI_TAB_DESC_INIT;
-    tab.title = "Status";
-    tab.build = build_status_tab;
-    tab.update = update_status_tab;
+    static UiTabDesc tabs[3] = {UI_TAB_DESC_INIT, UI_TAB_DESC_INIT, UI_TAB_DESC_INIT};
+    tabs[0].title = "Status";
+    tabs[0].build = build_status_tab;
+    tabs[0].update = update_status_tab;
+    tabs[1].title = "Tracker";
+    tabs[1].build = build_tracker_tab;
+    tabs[1].update = update_tracker_tab;
+    tabs[2].title = "Messages";
+    tabs[2].build = build_messages_tab;
+    tabs[2].update = update_messages_tab;
     UiWindowDesc desc = UI_WINDOW_DESC_INIT;
-    desc.tabs = &tab;
-    desc.tab_count = 1;
+    desc.tabs = tabs;
+    desc.tab_count = 3;
+    desc.rcss = kWindowRcss;
     desc.on_closed = [](ModContext*, UiWindowHandle, void*) {
         g_statusWindow = 0;
         g_statusWindowText = 0;
+        g_trackerSummary = g_trackerProgress = g_trackerList = 0;
+        g_trackerGroups.clear();
+        g_logElem = 0;
     };
     svc_mng.ui->window_push(svc_mng.mod_ctx, &desc, &g_statusWindow);
 }
@@ -1443,6 +1958,8 @@ ModResult activate() {
 
 void deactivate() {
     g_client.disconnect();
+    reset_tracker();
+    g_log.clear();
     g_textOverrides.clear();
     if (g_resolver != 0) {
         svc_mng.item->clear_check_resolver(svc_mng.mod_ctx, g_resolver);
@@ -1498,6 +2015,7 @@ void tick() {
         deliver_items();
         tick_death_link();
     }
+    tick_tracker();
 }
 
 ModResult open_connect_gate(void* fileSelect) {

@@ -1,5 +1,7 @@
 #include "ap_client.hpp"
 
+#include "text_safe.hpp"
+
 #include <mods/svc/log.hpp>
 
 #include <memory>
@@ -291,29 +293,61 @@ void Client::say(const std::string& text) {
     }
 }
 
+namespace {
+
+// The text a PrintJSON part stands for: ids resolved to names where we know them.
+std::string part_text(const json& part, const Client& client) {
+    const std::string type = part.value("type", "text");
+    const std::string text = part.value("text", "");
+    if (type == "player_id") {
+        const auto& name = client.playerName(std::atoi(text.c_str()));
+        return name.empty() ? text : name;
+    }
+    if (type == "item_id" || type == "location_id") {
+        const auto gameIt = s_slotGames.find(part.value("player", 0));
+        const auto& table = type == "item_id" ? s_itemNames : s_locationNames;
+        const int64_t id = std::strtoll(text.c_str(), nullptr, 10);
+        if (gameIt != s_slotGames.end()) {
+            if (const auto g = table.find(gameIt->second); g != table.end()) {
+                if (const auto n = g->second.find(id); n != g->second.end()) {
+                    return n->second;
+                }
+            }
+        }
+    }
+    return text;
+}
+
+}  // namespace
+
 std::string flatten_print(const json& data, const Client& client) {
     std::string out;
     for (const auto& part : data) {
+        out += part_text(part, client);
+    }
+    return out;
+}
+
+std::string print_rml(const json& data, const Client& client) {
+    std::string out;
+    for (const auto& part : data) {
         const std::string type = part.value("type", "text");
-        const std::string text = part.value("text", "");
+        const std::string text = rml_escape(message_safe(part_text(part, client), 300));
+        const char* cls = nullptr;
         if (type == "player_id") {
-            const int slot = std::atoi(text.c_str());
-            const auto& name = client.playerName(slot);
-            out += name.empty() ? text : name;
-        } else if (type == "item_id" || type == "location_id") {
-            const int owner = part.value("player", 0);
-            const auto gameIt = s_slotGames.find(owner);
-            const auto& table = type == "item_id" ? s_itemNames : s_locationNames;
-            const int64_t id = std::strtoll(text.c_str(), nullptr, 10);
-            std::string name = text;
-            if (gameIt != s_slotGames.end()) {
-                if (const auto g = table.find(gameIt->second); g != table.end()) {
-                    if (const auto n = g->second.find(id); n != g->second.end()) {
-                        name = n->second;
-                    }
-                }
-            }
-            out += name;
+            cls = std::atoi(part.value("text", "").c_str()) == client.slot() ? "ap-me" : "ap-player";
+        } else if (type == "player_name") {
+            cls = "ap-player";
+        } else if (type == "item_id" || type == "item_name") {
+            const int flags = part.value("flags", 0);
+            cls = (flags & 1) ? "ap-prog" : (flags & 2) ? "ap-useful" : (flags & 4) ? "ap-trap" : "ap-item";
+        } else if (type == "location_id" || type == "location_name") {
+            cls = "ap-loc";
+        } else if (type == "entrance_name") {
+            cls = "ap-ent";
+        }
+        if (cls != nullptr) {
+            out += std::string{"<span class=\""} + cls + "\">" + text + "</span>";
         } else {
             out += text;
         }

@@ -56,6 +56,7 @@ namespace randomizer::logic::world
         void ResolveConflictingSettings();
         void Build();
         void BuildItemTable();
+        const auto& GetItemTable() const { return this->_itemTable; }
         void BuildLocationTable();
         void LoadLogicMacros();
         void LoadWorldGraph();

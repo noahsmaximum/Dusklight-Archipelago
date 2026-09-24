@@ -5,6 +5,7 @@
 #include "location.hpp"
 #include "../utility/log.hpp"
 
+#include <functional>
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
@@ -151,6 +152,9 @@ namespace randomizer::logic::search
         bool _newThingsFound = true;
         bool _isBeatable = false;
         bool _collectItems = true;
+        // Archipelago tracker: when set, only locations it accepts give up their item. The
+        // tracker's items come from the server and the save instead of from AP checks.
+        std::function<bool(const location::Location*)> _collectFilter{};
         bool _startingInventory = true;
         std::unordered_set<int> _ownedEvents;
         std::unordered_multiset<item::Item*> _ownedItems;

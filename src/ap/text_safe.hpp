@@ -39,4 +39,20 @@ inline std::string message_safe(std::string_view in, size_t maxBytes) {
     return out;
 }
 
+// For text placed inside RML (toasts, the Archipelago window). Newlines become line breaks.
+inline std::string rml_escape(std::string_view in) {
+    std::string out;
+    for (const char c : in) {
+        switch (c) {
+        case '<': out += "&lt;"; break;
+        case '>': out += "&gt;"; break;
+        case '&': out += "&amp;"; break;
+        case '"': out += "&quot;"; break;
+        case '\n': out += "<br/>"; break;
+        default: out += c;
+        }
+    }
+    return out;
+}
+
 }  // namespace ap
