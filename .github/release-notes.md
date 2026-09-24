@@ -6,19 +6,18 @@
    - macOS: `~/Library/Application Support/TwilitRealm/Dusklight/mods`
 2. **Apworld** — put `tp_dusklight.apworld` in your Archipelago `custom_worlds` folder.
 3. **YAML** — grab a preset below, or generate a template from the Archipelago Launcher. Set `name:` to your slot name.
-4. **Dusklight setting** — turn on **Can Transform Anywhere** (Settings → Cheats). Logic may expect you to transform where NPCs can see you.
+4. **Dusklight setting** — for Easy, Normal, Hard or Extreme, turn on **Can Transform Anywhere** (Settings → Cheats). Logic may expect you to transform where NPCs can see you.
 
 Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, start a **new file**, and enter your server address, slot name and password. The seed builds from the server and you play.
 
 Needs Dusklight 2.0.1 or newer.
 
-## What's new in 0.5.1
+## What's new in 0.5.2
 
-- **Hyrule Castle no longer holds other players' important items.** It's the final dungeon, so anything a friend needed from there only turned up at the very end of your game. Every preset and the template exclude it, and it's now the default. Each dungeon is a location group: `exclude_locations: [Hyrule Castle, Palace of Twilight]` works too, and `[]` turns it off.
-- **Easy, Normal and Hard raise progression balancing** (90, 80, 70), so this game's progression turns up earlier and there's less waiting in the long tail.
-- **Every preset has Transform Anywhere logic on**, so turn on Dusklight's Can Transform Anywhere cheat (see Install).
+- **Easy, Normal, Hard and Extreme start with the Shadow Crystal**, so you can turn into a wolf from the beginning, and expect Transform Anywhere: turn on Dusklight's Can Transform Anywhere cheat for them (see Install). Ultimate, Hero of Twilight and Hero of Time keep both vanilla.
+- **Starting inventory works.** `start_inventory` and `start_inventory_from_pool` used to stop generation with an error; they work now.
 
-New in 0.5.0: seven presets sized by checks, the Shuffled Dungeons option, and WebSocket compression.
+New in 0.5.1: Hyrule Castle holds no other player's important items by default, and Easy, Normal and Hard raise progression balancing.
 
 ## Updating
 

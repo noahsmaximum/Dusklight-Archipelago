@@ -42,7 +42,7 @@ Twilight Princess (Dusklight):
   palace_of_twilight_requirements: vanilla
   temple_of_time_sword_requirement: master_sword
   goron_mines_entrance: closed
-  logic_transform_anywhere: true
+  logic_transform_anywhere: false
   logic_increase_wallet_capacity: false
   logic_damage_multiplier: double
 

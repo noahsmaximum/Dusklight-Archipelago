@@ -6,6 +6,10 @@
 name: Player{number}
 description: Twilight Princess (Dusklight) - Extreme
 game: Twilight Princess (Dusklight)
+# Starting with an item needs apworld 1.4.2 or newer.
+requires:
+  game:
+    Twilight Princess (Dusklight): 1.4.2
 
 Twilight Princess (Dusklight):
   skip_prologue: false
@@ -54,3 +58,7 @@ Twilight Princess (Dusklight):
   # Keep other players' important items out of the final dungeon, so nobody waits
   # on the very end of this game for them.
   exclude_locations: [Hyrule Castle]
+
+  # Start with the Shadow Crystal, so you can turn into a wolf from the beginning.
+  start_inventory_from_pool:
+    Shadow Crystal: 1

@@ -7,6 +7,10 @@
 name: Player{number}
 description: Twilight Princess (Dusklight) - Easy
 game: Twilight Princess (Dusklight)
+# Starting with an item needs apworld 1.4.2 or newer.
+requires:
+  game:
+    Twilight Princess (Dusklight): 1.4.2
 
 Twilight Princess (Dusklight):
   # Get straight into the game
@@ -65,3 +69,7 @@ Twilight Princess (Dusklight):
 
   # Pull this game's progression earlier, so there's less waiting in the long tail.
   progression_balancing: 90
+
+  # Start with the Shadow Crystal, so you can turn into a wolf from the beginning.
+  start_inventory_from_pool:
+    Shadow Crystal: 1

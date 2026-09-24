@@ -378,6 +378,8 @@ class TPWorld(World):
 
         # Classification needs every compiled rule's referenced items, so lock items last.
         self.progression_items = set(comp.referenced_items)
+        for item in mw.precollected_items[p]:
+            item.classification = self._classification(item.name)
         for loc, name in pending_locked:
             loc.place_locked_item(self._make_item(name, event=True))
 
@@ -390,7 +392,13 @@ class TPWorld(World):
             return ItemClassification.progression
         if name == "Foolish Item":
             return ItemClassification.trap
-        if name in self.progression_items:
+        progression_items = getattr(self, "progression_items", None)
+        if progression_items is None:
+            # Start inventory is created between generate_early and create_regions, before
+            # the rules are compiled. Progression until then is the safe guess (the state
+            # counts it); create_regions reclassifies it once the rules are known.
+            return ItemClassification.progression
+        if name in progression_items:
             if name in _SKIP_BALANCING or it.is_golden_bug:
                 return ItemClassification.progression_skip_balancing
             return ItemClassification.progression

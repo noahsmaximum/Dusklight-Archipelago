@@ -24,9 +24,9 @@ You need three things:
    from the Archipelago Launcher; if you just installed or updated the apworld, restart the
    Launcher first, because it keeps using the apworld it loaded when it started.
 
-In Dusklight's settings, turn on **Can Transform Anywhere** (under Cheats). Every preset, and
-the template's default, has `logic_transform_anywhere` on, so logic may expect you to
-transform where NPCs can see you, which the game otherwise refuses.
+For Easy, Normal, Hard, Extreme or the template's default, turn on **Can Transform Anywhere**
+in Dusklight's settings (under Cheats). They have `logic_transform_anywhere` on, so logic may
+expect you to transform where NPCs can see you, which the game otherwise refuses.
 
 Then:
 
@@ -89,6 +89,10 @@ unshuffled is random per seed, and dungeons differ in size.
 | Ultimate | ~570 | Normal | Every possible check — all nine dungeons, every bug, sky character, gift, shop item, hidden skill, rupee and poe — at Normal's difficulty. |
 | Hero of Twilight | ~570 | Hard | Every possible check at Hard's difficulty. |
 | Hero of Time | ~570 | Hardest | Every possible check with Extreme's punishment, and every piece of junk replaced by a trap. |
+
+Easy, Normal, Hard and Extreme start you with the Shadow Crystal, so you can turn into a wolf
+from the beginning, and expect Transform Anywhere (see above). Ultimate, Hero of Twilight and
+Hero of Time play it straight: you find the crystal and transform where the game allows.
 
 Every preset keeps other players' important items out of Hyrule Castle (see below), and Easy,
 Normal and Hard raise `progression_balancing` (90, 80, 70) so this game's progression turns up
