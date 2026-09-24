@@ -180,7 +180,7 @@ This fork adds the Archipelago game mode, the network client and the apworld.
 
 ## AI disclosure
 
-This fork's code, apworld and documentation were written/assisted with Claude Code. I, NoahsMaximmum have been directing, reviewing and play-testing every version.
+This fork's code, apworld and documentation were written/assisted with Claude Code. I, NoahsMaximum have been directing, reviewing and play-testing every version.
 The randomizer is built off of TwilitRealm's randomizer. Every release goes through manual and automated tests (each preset's
 seeds rebuilt in the game's own generator and compared exactly, the TLS and compression suites,
 builds on every platform), but not every change has been played in game before release, so
