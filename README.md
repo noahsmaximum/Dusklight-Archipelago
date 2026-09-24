@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="res/icon.png" alt="Dusklight Archipelago logo" width="200">
+</p>
+
 # Dusklight Archipelago
 
 [Archipelago](https://archipelago.gg) multiworld support for [Dusklight](https://github.com/TwilitRealm/dusklight),
