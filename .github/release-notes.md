@@ -11,11 +11,13 @@ Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, st
 
 Needs Dusklight 2.0.1 or newer. This mod carries its own copy of the randomizer, so Dusklight's built-in Randomizer doesn't need updating or removing; the two don't interfere.
 
-## What's new in 1.0.1
+## What's new in 1.1.0
 
-- **A look of its own:** the Dusklight Archipelago logo and banner in the mod manager, and "Twilight Princess Archipelago" on the title screen in Archipelago mode.
+- **Tracker.** The Archipelago tab (F1) has a Tracker page: how many checks you've done, and which ones are in logic right now, overall and per region. It works out logic from the seed itself and updates as items arrive.
+- **Messages.** A Messages page shows everything the room says in Archipelago's colors, and lets you chat or send commands like `!hint`.
+- **Update the apworld too** (1.6.0): it tells the tracker which dungeons stayed vanilla. Seeds from older apworlds still work.
 
-New in 1.0.0: no more Can Transform Anywhere cheat; the mod handles it for Transform Anywhere seeds. The apworld is unchanged since 0.6.0 (1.5.0).
+New in 1.0.1: the Dusklight Archipelago logo, banner and title screen.
 
 ## Updating
 
