@@ -11,13 +11,12 @@ Then in Dusklight: use the arrows on the Play button to pick **Archipelago**, st
 
 Needs Dusklight 2.0.1 or newer. This mod carries its own copy of the randomizer, so Dusklight's built-in Randomizer doesn't need updating or removing; the two don't interfere.
 
-## What's new in 1.1.0
+## What's new in 1.2.0
 
-- **Tracker.** The Archipelago tab (F1) has a Tracker page: how many checks you've done, and which ones are in logic right now, overall and per region. It works out logic from the seed itself and updates as items arrive.
-- **Messages.** A Messages page shows everything the room says in Archipelago's colors, and lets you chat or send commands like `!hint`.
-- **Update the apworld too** (1.6.0): it tells the tracker which dungeons stayed vanilla. Seeds from older apworlds still work.
+- **Upstream randomizer 1.0.5.** Fighting Shadow Beasts without a sword now needs Midna's charge (wolf form, Midna's Desperate Hour and all three twilights done); logic used to expect it earlier. Palace of Twilight gets its missing start flags, and the Cave of Ordeals fairy reward can't be collected twice.
+- **Update the mod and the apworld (1.7.0) together.** The logic changed, so each refuses seeds from the other's older version. Finish multiworlds already in progress on 1.1.0.
 
-New in 1.0.1: the Dusklight Archipelago logo, banner and title screen.
+New in 1.1.0: the Tracker and Messages pages in the Archipelago tab.
 
 ## Updating
 
