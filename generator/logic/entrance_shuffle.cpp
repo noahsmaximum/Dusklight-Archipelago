@@ -100,6 +100,11 @@ namespace randomizer::logic::entrance_shuffle
             if (forwardEntry["Follower Entrances"]) {
                 forwardEntrance->SetFollowerEntrances(forwardEntry["Follower Entrances"]);
             }
+            if (forwardEntry["Coupled Points"]) {
+                for (const auto& pointNode : forwardEntry["Coupled Points"]) {
+                    forwardEntrance->AddCoupledPoint(pointNode.as<int16_t>());
+                }
+            }
             if (forwardEntry["Dungeon Stage Returns"]) {
                 forwardEntrance->SetDungeonStageReturns(forwardEntry["Dungeon Stage Returns"]);
             }
@@ -126,7 +131,11 @@ namespace randomizer::logic::entrance_shuffle
                 if (returnEntry["Follower Entrances"]) {
                     returnEntrance->SetFollowerEntrances(returnEntry["Follower Entrances"]);
                 }
-
+                if (returnEntry["Coupled Points"]) {
+                    for (const auto& pointNode : returnEntry["Coupled Points"]) {
+                        returnEntrance->AddCoupledPoint(pointNode.as<int16_t>());
+                    }
+                }
                 // Add coupled entrances to their respective tag group
                 if (entranceDataNode["Entrance Couple Tag"])
                 {
@@ -164,11 +173,10 @@ namespace randomizer::logic::entrance_shuffle
                     auto mainEntrance = entrances.back();
                     entrances.pop_back();
 
-                    std::vector<int16_t> coupledPoints;
                     for (auto it = entrances.begin(); it != entrances.end();) {
                         auto coupledEntrance = *it;
                         if (coupledEntrance->IsPrimary() == mainEntrance->IsPrimary()) {
-                            coupledPoints.push_back(coupledEntrance->GetPointNo());
+                            mainEntrance->AddCoupledPoint(coupledEntrance->GetPointNo());
 
                             // Completely remove the coupled door from the world graph
                             coupledEntrance->GetConnectedArea()->RemoveEntrance(coupledEntrance);
@@ -178,8 +186,6 @@ namespace randomizer::logic::entrance_shuffle
                             ++it;
                         }
                     }
-
-                    mainEntrance->SetCoupledEntrances(std::move(coupledPoints));
 
                     // Change the main door's name to be more general
                     mainEntrance->GeneralizeName();

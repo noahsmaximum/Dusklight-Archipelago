@@ -935,7 +935,9 @@ void randomizer_checkAndOverrideEntranceData(const char*& stageName, s8& roomNo,
 
         // Override the spawn link will go to if we are going through the Telma's bar entrance during
         // Lanayru twilight. The door is ajar in this layer, so going through the normal spawn doesn't work.
-        if (!dComIfGs_isDarkClearLV(2) && newOverride.stageId == 53 && roomNo == 3 && pointNo == 1) {
+        if (!dComIfGs_isDarkClearLV(2) &&
+            ((newOverride.stageId == Castle_Town && roomNo == 3 && pointNo == 1) ||
+             (newOverride.stageId == Castle_Town_Interiors && roomNo == 5 && pointNo == 0))) {
             pointNo = 30;
         }
 
@@ -1744,7 +1746,7 @@ RandomizerContext WriteSeedData(randomizer::logic::world::World* world) {
             randoData.mEntranceOverrides[forward] = replaces;
 
             // Set overrides for all coupled entrances
-            for (const auto& point : entrance->GetCoupledEntrances()) {
+            for (const auto& point : entrance->GetCoupledPoints()) {
                 RandomizerContext::EntranceOverride coupled = {.stageId = entrance->GetStageId(), .roomNo = entrance->GetRoomNo(), .mapLayer = entrance->GetLayerNo(), .pointNo = point};
                 randoData.mEntranceOverrides[coupled] = replaces;
             }

@@ -299,13 +299,6 @@
     parameters: 0x00000000
     next: 0x248
 
-  # Patch Cave of Ordeals Great Fairy to skip over the check
-  # for an empty bottle the first time
-  - index: 0x850
-    type: message
-    message: 0x25B
-    next: 0x202
-
 6: # zel_06.bmg - Faron Woods interiors and other shared areas
   # Modify Coro's flow so that all 3 items can be collected at any time
   # Change all start indices to first check for first item flag

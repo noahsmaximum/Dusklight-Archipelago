@@ -167,7 +167,7 @@ endforeach ()
 b_embed(randomizer_embeds "src/ap/ca_bundle.pem")
 
 # Versioning
-set(RANDOMIZER_VERSION "1.0.4")
+set(RANDOMIZER_VERSION "1.0.5")
 set(ARCHIPELAGO_VERSION "1.1.0")
 find_package(Git QUIET)
 if(GIT_FOUND)

@@ -552,6 +552,9 @@ RegionFlags:
   Palace of Twilight:
     Index: 0x17
     Flags:
+      - 0x5E # Palace of Twilight intro CS
+      - 0x64 # East platform to palace active
+      - 0x94 # Set flag to trigger the twilight fence before Zant
       - Skip_Minor_Cutscenes == On:
         - 0x4D # Phantom Zant 1 CS.
         - 0x66 # Midna text when west hand steals sol.

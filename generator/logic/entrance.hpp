@@ -173,8 +173,8 @@ namespace randomizer::logic::entrance
         void SetDungeonStageReturns(const YAML::Node& node);
         void SetGameInfo(const YAML::Node& node);
         void SetExtraOverrideInfo(const std::string& name, const YAML::Node& node);
-        void SetCoupledEntrances(const std::vector<int16_t>& entrances) { _coupledEntrances = entrances; }
-        const std::vector<int16_t>& GetCoupledEntrances() const { return _coupledEntrances; }
+        void AddCoupledPoint(int16_t point) { _coupledEntrances.push_back(point); }
+        const std::vector<int16_t>& GetCoupledPoints() const { return _coupledEntrances; }
         void SetFollowerEntrances(const YAML::Node& followerList);
         const std::list<Entrance*>& GetFollowerEntrances() const { return _followerEntrances; }
         void SetBossEntrance(Entrance* bossEntrance) {_bossEntrance = bossEntrance;}

@@ -103,9 +103,17 @@ Has Damaging Item: Sword or Ball_and_Chain or Bow or Bombs or Iron_Boots or Wolf
 Can Hit Crystal Switch: Clawshot or Has_Damaging_Item
 Can Hit Crystal Switch at Range: Clawshot or Bow
 
+Can Complete Faron Twilight: Faron_Twilight_Cleared == On or count(Faron_Twilight_Tear, 16)
+Can Complete Eldin Twilight: Eldin_Twilight_Cleared == On or count(Eldin_Twilight_Tear, 16)
+Can Complete Lanayru Twilight: Lanayru_Twilight_Cleared == On or count(Lanayru_Twilight_Tear, 16)
+Can Complete All Twilight: Can_Complete_Faron_Twilight and Can_Complete_Eldin_Twilight and Can_Complete_Lanayru_Twilight
 Can Complete MDH: Skip_Midna's_Desperate_Hour == On or ('Can_Access_Castle_Town_South' and 'Can_Complete_Lakebed_Temple')
 
+Can Defeat Faron Twilit Insect: Twilight
+Can Defeat Eldin Twilit Insect: Twilight and (Shadow_Crystal or 'Can_Access_Faron_Field')
+Can Defeat Lanayru Twilit Insect: Twilight and Can_Complete_Eldin_Twilight and (Shadow_Crystal or 'Can_Access_North_Eldin_Field')
 
+Can Midna Charge: Wolf_Link and Can_Complete_MDH and Can_Complete_All_Twilight
 
 # REGULAR ENEMIES
 
@@ -113,7 +121,7 @@ Can Complete MDH: Skip_Midna's_Desperate_Hour == On or ('Can_Access_Castle_Town_
 Can Defeat Generic Enemy: Sword or Ball_and_Chain or Bow or Spinner or Wolf_Link or Bombs or 
                           Can_Use_Back_Slice_as_Sword or (Can_Do_Niche_Stuff and Iron_Boots)
 
-Can Defeat Shadow Beast: Sword or (Wolf_Link and Can_Complete_MDH)
+Can Defeat Shadow Beast: Sword or Can_Midna_Charge
 Can Defeat Keese: Sword or Ball_and_Chain or Bow or Spinner or Wolf_Link or Slingshot or 
                   Can_Use_Back_Slice_as_Sword or (Can_Do_Niche_Stuff and Iron_Boots)
 Can Defeat Fire Keese: Can_Defeat_Keese
@@ -223,15 +231,6 @@ Has Sword For Temple of Time: Temple_of_Time_Sword_Requirement == None or
                               (Temple_of_Time_Sword_Requirement == Ordon_Sword and Ordon_Sword) or
                               (Temple_of_Time_Sword_Requirement == Master_Sword and Master_Sword) or
                               (Temple_of_Time_Sword_Requirement == Light_Sword and Light_Sword)
-
-Can Complete Faron Twilight: Faron_Twilight_Cleared == On or count(Faron_Twilight_Tear, 16)
-Can Complete Eldin Twilight: Eldin_Twilight_Cleared == On or count(Eldin_Twilight_Tear, 16)
-Can Complete Lanayru Twilight: Lanayru_Twilight_Cleared == On or count(Lanayru_Twilight_Tear, 16)
-Can Complete All Twilight: Can_Complete_Faron_Twilight and Can_Complete_Eldin_Twilight and Can_Complete_Lanayru_Twilight
-
-Can Defeat Faron Twilit Insect: Twilight
-Can Defeat Eldin Twilit Insect: Twilight and (Shadow_Crystal or 'Can_Access_Faron_Field')
-Can Defeat Lanayru Twilit Insect: Twilight and Can_Complete_Eldin_Twilight and (Shadow_Crystal or 'Can_Access_North_Eldin_Field')
 
 Can Clear Forest: Can_Complete_Faron_Twilight and ('Can_Complete_Forest_Temple' or Faron_Woods_Logic == Open)
 

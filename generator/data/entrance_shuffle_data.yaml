@@ -2003,6 +2003,8 @@
     Spawn Type: "B0"
     Parameters: "F09F"
     State: -1
+    Coupled Points:
+      - 30
   Return:
     Connection: Castle Town Telmas Bar -> Castle Town South
     Stage: 53
@@ -2011,6 +2013,8 @@
     Spawn Type: "50"
     Parameters: "F01F"
     State: -1
+    Coupled Points:
+      - 30
 
 ###############################
 #            CAVES            #

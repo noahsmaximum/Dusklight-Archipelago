@@ -658,10 +658,10 @@ HookAction hookPreIsDarkClearLV(ModContext*, void* args, void* retval, void*) {
 }
 
 HookAction hookPreCheckEmptyBottle(ModContext*, void*, void* retval, void*) {
-    if (getStageID() == Cave_of_Ordeals) {
-        // Return 1 to allow the player to collect the floor 50 reward, as this makes the
-        // game think the player has an empty bottle.
-        *static_cast<u8*>(retval) = 1;
+    // If we're in the last room of Cave of Ordeals, always return true if this is our first time
+    // Here. Otherwise, always return false so that we don't get the item multiple times
+    if (getStageID() == Cave_of_Ordeals && fopAcM_GetRoomNo(dComIfGp_getPlayer(0)) == 49) {
+        *static_cast<u8*>(retval) = !dComIfGs_isEventBit(SPRING_SPIRITS_CAN_GIVE_FARY_TEARS);
         return HOOK_SKIP_ORIGINAL;
     }
     return HOOK_CONTINUE;
@@ -2270,6 +2270,8 @@ void hookPostFairyAppearDemoCall(ModContext*, void* args, void* retval, void*) {
     // randomizer overrides EVT_APPEAR_50F_04 set to always be EVT_APPEAR_50F_01
     if (i_this->field_0xff4 == 12) {
         i_this->field_0xff4 = 9;
+    } else if (i_this->field_0xff4 == 13) {
+        i_this->field_0xff4 = 10;
     }
 }
 
